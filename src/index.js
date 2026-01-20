@@ -27,9 +27,13 @@ db.queryRaw('SELECT 1 AS test')
 // Manejo de cierre graceful
 process.on('SIGTERM', () => {
   logger.info('SIGTERM recibido, cerrando servidor...');
-  knex.destroy()
+  db.close()
     .then(() => {
       logger.info('Conexiones cerradas');
       process.exit(0);
+    })
+    .catch(err => {
+      logger.error('Error al cerrar conexiones:', err);
+      process.exit(1);
     });
 });
