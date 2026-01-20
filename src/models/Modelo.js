@@ -17,34 +17,64 @@ class Modelo extends Model {
         ModeloID: { type: 'integer' },
         MarcaID: { type: 'integer' },
         CodigoModelo: { type: 'string', maxLength: 100 },
+        CodigoAutodata: { type: 'string', maxLength: 8 },
         DescripcionModelo: { type: 'string', maxLength: 300 },
+        
+        // Datos de Carga (del CSV)
         CategoriaCodigo: { type: 'string', maxLength: 50 },
         CombustibleCodigo: { type: 'string', maxLength: 50 },
         OrigenCodigo: { type: 'string', maxLength: 50 },
+        Familia: { type: 'string', maxLength: 100 },
+        
+        // Datos Mínimos (16 campos obligatorios)
+        Segmento: { type: 'string', maxLength: 100 },
+        Modelo1: { type: 'string', maxLength: 200 },
+        Tipo2_Carroceria: { type: 'string', maxLength: 100 },
+        Origen: { type: 'string', maxLength: 100 },
+        Combustible: { type: 'string', maxLength: 50 },
+        Cilindros: { type: 'integer' },
+        Valvulas: { type: 'integer' },
+        CC: { type: 'integer' },  // Cilindrada
+        HP: { type: 'integer' },
+        TipoCajaAut: { type: 'string', maxLength: 100 },
+        Puertas: { type: 'integer' },
+        Asientos: { type: 'integer' },
+        TipoMotor: { type: 'string', maxLength: 100 },
+        TipoVehiculoElectrico: { type: 'string', maxLength: 100 },
+        Importador: { type: 'string', maxLength: 200 },
+        PrecioInicial: { type: 'number' },
+        
+        // Otros campos
         ShortName: { type: 'string', maxLength: 100 },
         Precio0KMInicial: { type: 'number' },
-        Familia: { type: 'string', maxLength: 100 },
         Anio: { type: 'integer' },
         Tipo: { type: 'string', maxLength: 100 },
         Tipo2: { type: 'string', maxLength: 100 },
-        CC: { type: 'integer' },
-        HP: { type: 'integer' },
         Traccion: { type: 'string', maxLength: 50 },
         Caja: { type: 'string', maxLength: 50 },
         TipoCaja: { type: 'string', maxLength: 50 },
         Turbo: { type: 'boolean' },
-        Puertas: { type: 'integer' },
         Pasajeros: { type: 'integer' },
         TipoVehiculo: { type: 'string', maxLength: 100 },
+        
+        // Segmentaciones
         SegmentacionAutodata: { type: 'string', maxLength: 50 },
         SegmentacionGM: { type: 'string', maxLength: 50 },
         SegmentacionAudi: { type: 'string', maxLength: 50 },
         SegmentacionSBI: { type: 'string', maxLength: 50 },
         SegmentacionCitroen: { type: 'string', maxLength: 50 },
-        Importador: { type: 'string', maxLength: 200 },
+        
+        // Control de Flujo
         Estado: { type: 'string', maxLength: 50 },
         EstadoID: { type: 'integer' },
-        FechaCreacion: { type: 'string', format: 'date-time' }
+        ObservacionesRevision: { type: 'string' },
+        
+        // Auditoría
+        CreadoPorID: { type: 'integer' },
+        FechaCreacion: { type: 'string', format: 'date-time' },
+        ModificadoPorID: { type: 'integer' },
+        FechaModificacion: { type: 'string', format: 'date-time' },
+        Activo: { type: 'boolean' }
       }
     };
   }

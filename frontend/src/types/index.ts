@@ -1,16 +1,35 @@
-// Estado de los modelos en el flujo de trabajo
+// Estado de los modelos en el flujo de trabajo - NUEVO SISTEMA
 export enum ModeloEstado {
+  // Fase 1: Importación/Creación
   IMPORTADO = 'importado',
+  CREADO = 'creado',
+  
+  // Fase 2: Datos Mínimos
+  DATOS_MINIMOS = 'datos_minimos',
+  REVISION_MINIMOS = 'revision_minimos',
+  CORREGIR_MINIMOS = 'corregir_minimos',
+  MINIMOS_APROBADOS = 'minimos_aprobados',
+  
+  // Fase 3: Equipamiento
+  EQUIPAMIENTO_CARGADO = 'equipamiento_cargado',
+  REVISION_EQUIPAMIENTO = 'revision_equipamiento',
+  CORREGIR_EQUIPAMIENTO = 'corregir_equipamiento',
+  
+  // Estado Final
+  DEFINITIVO = 'definitivo',
+  
+  // Estados antiguos (mantener por compatibilidad)
   REQUISITOS_MINIMOS = 'requisitos_minimos',
   EN_REVISION = 'en_revision',
   PARA_CORREGIR = 'para_corregir',
-  DEFINITIVO = 'definitivo',
+  EN_APROBACION = 'en_aprobacion',
+  EQUIPAMIENTO_CARGADO_OLD = 'equipamiento_cargado',
 }
 
 // Etapas del flujo
 export enum EtapaFlujo {
   IMPORTACION = 1,
-  CARGA_DATOS = 2,
+  DATOS_MINIMOS = 2,
   EQUIPAMIENTO = 3,
   REVISION = 4,
 }
@@ -55,37 +74,70 @@ export interface Modelo {
   CodigoMarca?: string;          // 4 dígitos (from JOIN with Marca)
   DescripcionModelo?: string;
   Modelo?: string; // Alias for DescripcionModelo
+  
+  // Datos de Carga (del CSV)
   Familia?: string;
   OrigenCodigo?: string;
   CombustibleCodigo?: string;
   CategoriaCodigo?: string;
+  
+  // Datos Mínimos (16 campos obligatorios)
+  Segmento?: string;
+  Modelo1?: string;              // Nombre del modelo
+  Tipo2_Carroceria?: string;
+  Origen?: string;
+  Combustible?: string;
+  Cilindros?: number;
+  Valvulas?: number;
+  CC?: number;                   // Cilindrada
+  HP?: number;
+  TipoCajaAut?: string;
+  Puertas?: number;
+  Asientos?: number;
+  TipoMotor?: string;
+  TipoVehiculoElectrico?: string;
+  Importador?: string;
+  PrecioInicial?: number;
+  
+  // Otros campos técnicos
   ShortName?: string;
   Precio0KMInicial?: number;
   Anio?: number;
   Tipo?: string;
   Tipo2?: string;
-  CC?: number;
-  HP?: number;
   Traccion?: string;
   Caja?: string;
   TipoCaja?: string;
   Turbo?: boolean;
-  Puertas?: number;
   Pasajeros?: number;
   TipoVehiculo?: string;
+  
+  // Segmentaciones
   SegmentacionAutodata?: string;
   SegmentacionGM?: string;
   SegmentacionAudi?: string;
   SegmentacionSBI?: string;
   SegmentacionCitroen?: string;
-  Importador?: string;
+  
+  // Control de Flujo
   Estado: string;
   EstadoID?: number;
-  UltimoComentario?: string; // Comentario del último cambio de estado
-  Activo: boolean;
+  ObservacionesRevision?: string;
+  UltimoComentario?: string; // Alias de ObservacionesRevision
+  
+  // Auditoría
+  CreadoPorID?: number;
   FechaCreacion: string;
+  ModificadoPorID?: number;
+  FechaModificacion?: string;
+  Activo: boolean;
+  
+  // Relaciones
   MarcaNombre?: string; // From join
   marca?: Marca;
+  equipamiento?: EquipamientoModelo;
+  versiones?: VersionModelo[];
+  
   // Alias for backwards compatibility
   id_modelo?: number;
   id_marca?: number;
@@ -133,94 +185,222 @@ export interface VersionModelo {
   updatedAt: string;
 }
 
-// Equipamiento del modelo
+// Equipamiento del modelo - 150+ campos
 export interface EquipamientoModelo {
-  id_equipamiento: number;
-  id_modelo: number;
+  EquipamientoID: number;
+  ModeloID: number;
   
-  // Seguridad
-  airbag_conductor?: boolean;
-  airbag_acompanante?: boolean;
-  airbag_lateral?: boolean;
-  airbag_cortina?: boolean;
-  abs?: boolean;
-  esp?: boolean;
-  control_traccion?: boolean;
-  asistente_arranque?: boolean;
-  camara_retroceso?: boolean;
-  sensores_estacionamiento?: boolean;
-  freno_automatico_emergencia?: boolean;
-  alerta_cambio_carril?: boolean;
-  control_punto_ciego?: boolean;
-  isofix?: boolean;
+  // DIMENSIONES Y DATOS TÉCNICOS (15 campos)
+  Largo?: number;
+  Ancho?: number;
+  Altura?: number;
+  DistanciaEjes?: number;
+  PesoOrdenMarcha?: number;
+  KgPorHP?: number;
+  Neumaticos?: string;
+  LlantasAleacion?: boolean;
+  DiametroLlantas?: number;
+  TPMS?: boolean;
+  KitInflableAntiPinchazo?: boolean;
+  RuedaAuxHomogenea?: boolean;
+  Cilindros?: number;
+  Valvulas?: number;
+  Inyeccion?: string;
   
-  // Confort
-  aire_acondicionado?: boolean;
-  climatizador?: boolean;
-  climatizador_bizona?: boolean;
-  asientos_cuero?: boolean;
-  asientos_calefaccionados?: boolean;
-  asientos_ventilados?: boolean;
-  asiento_conductor_electrico?: boolean;
-  volante_regulable_altura?: boolean;
-  volante_regulable_profundidad?: boolean;
-  volante_calefaccionado?: boolean;
-  espejos_electricos?: boolean;
-  espejos_calefaccionados?: boolean;
-  espejos_rebatibles?: boolean;
-  vidrios_electricos?: boolean;
-  vidrios_electricos_4?: boolean;
-  cierre_centralizado?: boolean;
-  alarma?: boolean;
-  sensor_lluvia?: boolean;
-  sensor_crepuscular?: boolean;
+  // MECÁNICA (9 campos)
+  Traccion?: string;
+  Suspension?: string;
+  Caja?: string;
+  MarchasVelocidades?: string;
+  Turbo?: boolean;
+  NumeroPuertas?: number;
+  Aceite?: string;
+  Norma?: string;
+  StartStop?: boolean;
   
-  // Multimedia
-  pantalla_tactil?: boolean;
-  tamaño_pantalla?: number;
-  apple_carplay?: boolean;
-  android_auto?: boolean;
-  bluetooth?: boolean;
-  usb?: boolean;
-  navegador_gps?: boolean;
-  sistema_sonido_premium?: boolean;
-  cantidad_parlantes?: number;
+  // CONSUMO Y EMISIONES (4 campos)
+  CO2_g_km?: number;
+  ConsumoRuta?: number;
+  ConsumoUrbano?: number;
+  ConsumoMixto?: number;
   
-  // Exterior
-  faros_led?: boolean;
-  faros_xenon?: boolean;
-  luces_diurnas?: boolean;
-  techo_solar?: boolean;
-  techo_panoramico?: boolean;
-  barras_techo?: boolean;
-  llantas_aleacion?: boolean;
-  tamaño_llantas?: number;
+  // GARANTÍA (3 campos)
+  GarantiaAnios?: number;
+  GarantiaKm?: number;
+  GarantiasDiferenciales?: string;
   
-  // Motor y performance
-  motor_tipo?: string;
-  turbo?: boolean;
-  cilindros?: number;
-  valvulas?: number;
-  potencia_maxima?: number;
-  torque_maximo?: number;
-  aceleracion_0_100?: number;
-  velocidad_maxima?: number;
-  consumo_ciudad?: number;
-  consumo_ruta?: number;
-  consumo_combinado?: number;
-  capacidad_tanque?: number;
+  // VEHÍCULOS ELÉCTRICOS/HÍBRIDOS (12 campos)
+  TipoVehiculoElectrico?: string;
+  EPedal?: boolean;
+  CapacidadTanqueHidrogeno?: number;
+  AutonomiaMaxRange?: number;
+  CicloNorma?: string;
+  PotenciaMotor?: number;
+  CapacidadOperativaBateria?: number;
+  ParMotorTorque?: number;
+  PotenciaCargaMax?: number;
+  TiposConectores?: string;
+  GarantiaCapBat?: string;
+  TecnologiaBat?: string;
   
-  // Dimensiones
-  largo?: number;
-  ancho?: number;
-  alto?: number;
-  distancia_entre_ejes?: number;
-  capacidad_baul?: number;
-  peso_vacio?: number;
-  capacidad_carga?: number;
+  // OTROS DATOS (3 campos)
+  OtrosDatos?: string;
+  TiempoCarga?: string;
+  CodigoFichaTecnica?: string;
   
-  createdAt: string;
-  updatedAt: string;
+  // CONFORT E INTERIOR (15 campos)
+  SistemaClimatizacion?: string;
+  Direccion?: string;
+  TipoBloqueo?: string;
+  KeylessSmartKey?: boolean;
+  LevantaVidrios?: string;
+  EspejosElectricos?: boolean;
+  EspejoInteriorElectrocromado?: boolean;
+  EspejosAbatiblesElectricamente?: boolean;
+  Tapizado?: string;
+  VolanteRevestidoCuero?: boolean;
+  TablerDigital?: boolean;
+  Computadora?: boolean;
+  GPS?: boolean;
+  VelocidadCrucero?: boolean;
+  Inmovilizador?: boolean;
+  
+  // SEGURIDAD (16 campos)
+  Alarma?: boolean;
+  ABAG?: boolean;
+  SRI?: boolean;
+  ABS?: boolean;
+  EBD_EBV_REF?: boolean;
+  DiscosFrenos?: string;
+  FrenoEstacionamientoElectrico?: boolean;
+  ESP_ControlEstabilidad?: boolean;
+  ControlTraccion?: boolean;
+  AsistFrenadoDetectorDistancia?: boolean;
+  AsistPendiente?: boolean;
+  DetectorCambioFila?: boolean;
+  DetectorPuntoCiego?: boolean;
+  TrafficSignRecognition?: boolean;
+  DriverAttentionControl?: boolean;
+  DetectorLluvia?: boolean;
+  
+  // CONTROL Y ASISTENCIA (4 campos)
+  GripControl?: boolean;
+  LimitadorVelocidad?: boolean;
+  AsistDescensoHDC?: boolean;
+  PaddleShift?: boolean;
+  
+  // MULTIMEDIA (13 campos)
+  ComandoAudioVolante?: boolean;
+  CD?: boolean;
+  MP3?: boolean;
+  USB?: boolean;
+  Bluetooth?: boolean;
+  DVD?: boolean;
+  MirrorScreen?: boolean;
+  SistemaMultimedia?: string;
+  PantallaMultimediaPulgadas?: number;
+  PantallaTactil?: boolean;
+  CargadorSmartphoneInduccion?: boolean;
+  KitHiFi?: string;
+  Radio?: boolean;
+  
+  // ASIENTOS (10 campos)
+  NumeroAsientos?: number;
+  AsientoElectricoCalefMasaje?: boolean;
+  AsientosRango2y3?: string;
+  Asiento2Mas1?: boolean;
+  ButacaElectrica?: boolean;
+  AsientoVentilado?: boolean;
+  AsientosMasajeador?: number;
+  ApoyabrazosDelantero?: boolean;
+  ApoyabrazosCentralTrasero?: boolean;
+  SoporteMusloDelantero?: boolean;
+  
+  // AJUSTES DE ASIENTOS (8 campos)
+  AsientoTraseroAjusteElectrico?: boolean;
+  TerceraFilaAsientosElectricos?: boolean;
+  TipoAlturaAsientoDelantero?: string;
+  SeatAdjustmentMemoryDriver?: boolean;
+  SeatAdjustmentMemoryCoDriver?: boolean;
+  LumbarAdjustmentFrontDriver?: boolean;
+  LumbarAdjustmentFrontCoDriver?: boolean;
+  SeatHeatingRear?: boolean;
+  
+  // TECHO (4 campos)
+  Techo?: string;
+  TechoBiTono?: boolean;
+  BarrasTecho?: boolean;
+  NumeroTechosQueSeAbren?: number;
+  
+  // SENSORES Y CÁMARAS (3 campos)
+  SensorEstacionamiento?: string;
+  Camara?: string;
+  SistemaAutomaticoEstacionamiento?: boolean;
+  
+  // ILUMINACIÓN (11 campos)
+  FarosNeblina?: boolean;
+  FarosDireccionales?: boolean;
+  FarosFullLED?: boolean;
+  FarosHalogenosDRL_LED?: boolean;
+  FarosXenonLimpiadores?: boolean;
+  PackVisibilidad?: boolean;
+  PasoLucesCruzRutaAutomatica?: boolean;
+  VisionNocturna?: boolean;
+  FarosMatrix?: boolean;
+  LucesTraserasLED?: boolean;
+  LucesTraserasOLED?: boolean;
+  
+  // MALETERO Y CARGA (7 campos)
+  MaleteraAperturaElectrica?: boolean;
+  CapacidadBaul?: number;
+  CapacidadTanqueCombustible?: number;
+  ProtectorCaja?: boolean;
+  ParticionCabina?: boolean;
+  NumPuertasLaterales?: number;
+  PuertaLateralElectrica?: boolean;
+  
+  // CARGA (4 campos)
+  CargaUtil_kg?: number;
+  VolumenUtil_m3?: number;
+  TipoAlturaUL?: string;
+  CapacidadCargaCamiones?: string;
+  
+  // SEGURIDAD AVANZADA (6 campos)
+  AlertaTraficoCruzadoTrasero?: boolean;
+  AlertaTraficoCruzadoFrontal?: boolean;
+  FrenadoMulticolision?: boolean;
+  HeadUpDisplay?: boolean;
+  CityStop?: boolean;
+  FrenoPeatones?: boolean;
+  
+  // OTROS EQUIPAMIENTO (21 campos)
+  BloqueDiferencialTerreno?: string;
+  DesempaniadorElectrico?: boolean;
+  IluminacionAmbiental?: boolean;
+  LimpiaLavaParabrisasTrasero?: boolean;
+  BlackWheelFrame?: boolean;
+  VolanteMultifuncion?: boolean;
+  TablerDigital3D?: boolean;
+  AceleracionBEV_0a100?: number;
+  AccelerationICE?: number;
+  CargaElectricaWireless?: boolean;
+  CargaElectricaInduccion?: boolean;
+  CableElectricoTipo3Incluido?: boolean;
+  ChassisDriveSelect?: boolean;
+  ChassisSportSuspension?: boolean;
+  DireccionCuatroRuedas?: boolean;
+  LucesLaser?: boolean;
+  DashboardDisplayConfigurable?: boolean;
+  WirelessSmartphoneIntegration?: boolean;
+  MobilePhoneAntenna?: boolean;
+  DeflectorViento?: boolean;
+  AsientosDeportivos?: boolean;
+  
+  // Auditoría
+  CreadoPorID?: number;
+  FechaCreacion?: string;
+  ModificadoPorID?: number;
+  FechaModificacion?: string;
 }
 
 // Precio de modelo

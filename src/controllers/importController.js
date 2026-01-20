@@ -306,7 +306,7 @@ const procesarBatch = async (req, res) => {
           Turbo: reg.turbo === 'Si' || reg.turbo === '1' || reg.turbo === 'true',
           Puertas: reg.puertas ? parseInt(reg.puertas) : null,
           Pasajeros: reg.pasajeros ? parseInt(reg.pasajeros) : null,
-          Estado: 'IMPORTADO',
+          Estado: 'importado',
           EstadoID: 1 // IMPORTADO
         };
 

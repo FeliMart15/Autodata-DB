@@ -11,9 +11,11 @@ import { ImportPage } from '@pages/ImportPage';
 import { ModelosPage } from '@pages/ModelosPage';
 import { ModeloDetailPage } from '@pages/ModeloDetailPage';
 import { MarcasPage } from '@pages/MarcasPage';
-import { AgregarEquipamientoPage } from '@pages/AgregarEquipamientoPage';
+import { AgregarDatosPage } from '@pages/AgregarDatosPage';
 import { RevisarVehiculosPage } from '@pages/RevisarVehiculosPage';
 import { UsuariosPage } from '@pages/UsuariosPage';
+import { CargarDatosPage } from '@pages/CargarDatosPage';
+import { RevisarPage } from '@pages/RevisarPage';
 import '@styles/globals.css';
 
 const queryClient = new QueryClient({
@@ -97,17 +99,37 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <Layout>
-                <AgregarEquipamientoPage />
+                <AgregarDatosPage />
               </Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/revisar-vehiculos"
+          path="/agregar-datos"
           element={
             <ProtectedRoute>
               <Layout>
-                <RevisarVehiculosPage />
+                <AgregarDatosPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cargar-datos"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <CargarDatosPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/revisar"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <RevisarPage />
               </Layout>
             </ProtectedRoute>
           }

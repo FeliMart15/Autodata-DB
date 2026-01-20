@@ -205,11 +205,14 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
 
       <Card>
         <CardHeader>
-          <CardTitle>Información General</CardTitle>
+          <CardTitle>Datos de Carga</CardTitle>
+          <p className="text-sm text-gray-600 mt-2">
+            Complete los 5 campos obligatorios para crear el modelo. Luego podrá agregar los datos mínimos completos.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {isNewModel && (
-            <div className="space-y-4 pb-4 border-b">
+            <>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <div className="flex items-end gap-2">
@@ -257,54 +260,97 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
                   required
                 />
               </div>
-            </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Familia *"
+                  value={formData.familia || ''}
+                  onChange={(e) => handleChange('familia', e.target.value)}
+                  disabled={readOnly}
+                  placeholder="SUV, Sedan, Hatchback, etc."
+                  required
+                />
+                <Select
+                  value={formData.combustible || ''}
+                  onValueChange={(value) => handleChange('combustible', value)}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger label="Combustible *">
+                    <SelectValue placeholder="Seleccionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Gasolina">Gasolina</SelectItem>
+                    <SelectItem value="Diesel">Diesel</SelectItem>
+                    <SelectItem value="Eléctrico">Eléctrico</SelectItem>
+                    <SelectItem value="Híbrido">Híbrido</SelectItem>
+                    <SelectItem value="GNC">GNC</SelectItem>
+                    <SelectItem value="HibridoEnchufable">Híbrido Enchufable</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Categoría *"
+                  value={formData.categoria || ''}
+                  onChange={(e) => handleChange('categoria', e.target.value)}
+                  disabled={readOnly}
+                  placeholder="Económico, Compacto, Premium, etc."
+                  required
+                />
+              </div>
+            </>
           )}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Familia"
-              value={formData.familia || ''}
-              onChange={(e) => handleChange('familia', e.target.value)}
-              disabled={readOnly}
-              placeholder="SUV, Sedan, etc."
-            />
-            <Input
-              label="Origen"
-              value={formData.origen || ''}
-              onChange={(e) => handleChange('origen', e.target.value)}
-              disabled={readOnly}
-              placeholder="Nacional, Importado"
-            />
-            <Select
-              value={formData.combustible || ''}
-              onValueChange={(value) => handleChange('combustible', value)}
-              disabled={readOnly}
-            >
-              <SelectTrigger label="Combustible">
-                <SelectValue placeholder="Seleccionar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Nafta">Nafta</SelectItem>
-                <SelectItem value="Diesel">Diesel</SelectItem>
-                <SelectItem value="Eléctrico">Eléctrico</SelectItem>
-                <SelectItem value="Híbrido">Híbrido</SelectItem>
-                <SelectItem value="GNC">GNC</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="number"
-              label="Año"
-              value={formData.año || ''}
-              onChange={(e) => handleChange('año', Number(e.target.value))}
-              disabled={readOnly}
-            />
-          </div>
+          {!isNewModel && (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Familia"
+                  value={formData.familia || ''}
+                  onChange={(e) => handleChange('familia', e.target.value)}
+                  disabled={readOnly}
+                  placeholder="SUV, Sedan, etc."
+                />
+                <Input
+                  label="Origen"
+                  value={formData.origen || ''}
+                  onChange={(e) => handleChange('origen', e.target.value)}
+                  disabled={readOnly}
+                  placeholder="Nacional, Importado"
+                />
+                <Select
+                  value={formData.combustible || ''}
+                  onValueChange={(value) => handleChange('combustible', value)}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger label="Combustible">
+                    <SelectValue placeholder="Seleccionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Nafta">Nafta</SelectItem>
+                    <SelectItem value="Diesel">Diesel</SelectItem>
+                    <SelectItem value="Eléctrico">Eléctrico</SelectItem>
+                    <SelectItem value="Híbrido">Híbrido</SelectItem>
+                    <SelectItem value="GNC">GNC</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  label="Año"
+                  value={formData.año || ''}
+                  onChange={(e) => handleChange('año', Number(e.target.value))}
+                  disabled={readOnly}
+                />
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tipo y Categoría</CardTitle>
-        </CardHeader>
+      {!isNewModel && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Tipo y Categoría</CardTitle>
+            </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Input
@@ -443,6 +489,8 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
           </div>
         </CardContent>
       </Card>
+        </>
+      )}
 
       {/* Dialog para crear marca */}
       <Dialog open={isCreateMarcaOpen} onOpenChange={setIsCreateMarcaOpen}>

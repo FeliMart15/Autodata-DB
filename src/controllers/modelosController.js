@@ -1,6 +1,14 @@
 const db = require('../config/db-simple');
 const logger = require('../config/logger');
 const { generarCodigoAutodata, obtenerProximoCodigoModelo, formatToCodigo4 } = require('../utils/codigoAutodata');
+const {
+  ESTADOS,
+  validarDatosMinimos,
+  validarTransicionEstado,
+  validarRequisitosEstado,
+  obtenerNombreEstado,
+  permiteEdicion
+} = require('../middleware/estadoValidation');
 
 // GET /api/modelos - Listar modelos con filtros y paginación
 exports.getAll = async (req, res) => {
@@ -47,6 +55,7 @@ exports.getAll = async (req, res) => {
         m.MarcaID,
         m.CodigoModelo,
         m.CodigoAutodata,
+        m.DescripcionModelo,
         m.DescripcionModelo AS Modelo,
         m.Familia,
         m.Anio,
@@ -59,7 +68,7 @@ exports.getAll = async (req, res) => {
       FROM Modelo m
       LEFT JOIN Marca mar ON m.MarcaID = mar.MarcaID
       WHERE ${whereClause}
-      ORDER BY m.FechaCreacion DESC
+      ORDER BY m.FechaModificacion DESC, m.FechaCreacion DESC
       OFFSET ${offset} ROWS
       FETCH NEXT ${limit} ROWS ONLY
     `;
@@ -211,7 +220,7 @@ exports.create = async (req, res) => {
     
     // Construir query dinámicamente con todos los campos
     const campos = ['MarcaID', 'CodigoModelo', 'CodigoAutodata', 'DescripcionModelo', 'Estado', 'Activo'];
-    const valores = [marcaId, `'${codigoModelo}'`, `'${codigoAutodata}'`, `N'${modelo.replace(/'/g, "''")}'`, `'importado'`, '1'];
+    const valores = [marcaId, `'${codigoModelo}'`, `'${codigoAutodata}'`, `N'${modelo.replace(/'/g, "''")}' `, `'creado'`, '1'];
     
     if (familia) { campos.push('Familia'); valores.push(`N'${familia.replace(/'/g, "''")}'`); }
     if (origen) { campos.push('OrigenCodigo'); valores.push(`N'${origen.replace(/'/g, "''")}'`); }
@@ -233,12 +242,6 @@ exports.create = async (req, res) => {
     if (importador) { campos.push('Importador'); valores.push(`N'${importador.replace(/'/g, "''")}'`); }
     
     // Insertar modelo
-    // Cambiar estado de 'importado' a 'requisitos_minimos'
-    const estadoIndex = campos.indexOf('Estado');
-    if (estadoIndex !== -1) {
-      valores[estadoIndex] = `'requisitos_minimos'`;
-    }
-    
     const insertQuery = `
       INSERT INTO Modelo (${campos.join(', ')})
       VALUES (${valores.join(', ')});
@@ -260,7 +263,7 @@ exports.create = async (req, res) => {
     if (modeloId) {
       const historialQuery = `
         INSERT INTO ModeloHistorial (ModeloID, Campo, ValorAnterior, ValorNuevo, Usuario)
-        VALUES (${modeloId}, 'Estado', NULL, 'requisitos_minimos', 'Sistema')
+        VALUES (${modeloId}, 'Estado', NULL, 'creado', 'Sistema')
       `;
       await db.queryRaw(historialQuery);
     }
@@ -327,7 +330,10 @@ exports.update = async (req, res) => {
     const camposPermitidos = [
       'MarcaID', 'DescripcionModelo', 'Familia', 'OrigenCodigo', 'CombustibleCodigo', 'Anio', 'Tipo', 'Tipo2',
       'TipoVehiculo', 'SegmentacionAutodata', 'CategoriaCodigo', 'Importador', 'CC', 'HP', 'Turbo',
-      'Traccion', 'Caja', 'TipoCaja', 'Puertas', 'Pasajeros', 'Estado', 'UltimoComentario'
+      'Traccion', 'Caja', 'TipoCaja', 'Puertas', 'Pasajeros', 'Estado', 'UltimoComentario',
+      // Nuevos campos de Datos Mínimos
+      'Modelo1', 'Tipo2_Carroceria', 'Cilindros', 'Valvulas', 'TipoCajaAut', 'Asientos', 
+      'TipoMotor', 'TipoVehiculoElectrico', 'PrecioInicial'
     ];
     
     // Mapeo de nombres de campos del frontend a la base de datos
@@ -631,6 +637,170 @@ exports.getByCodigoAutodata = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error al buscar modelo',
+      error: error.message
+    });
+  }
+};
+
+// POST /api/modelos/:id/cambiar-estado - Cambiar estado del modelo con validaciones
+exports.cambiarEstado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nuevoEstado, observaciones, usuarioID } = req.body;
+    
+    // Validar parámetros
+    if (!nuevoEstado) {
+      return res.status(400).json({
+        success: false,
+        message: 'El campo nuevoEstado es obligatorio'
+      });
+    }
+    
+    // Obtener modelo actual
+    const queryModelo = `
+      SELECT * FROM Modelo WHERE ModeloID = ${id} AND Activo = 1
+    `;
+    const resultadoModelo = await db.queryRaw(queryModelo);
+    
+    if (resultadoModelo.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Modelo no encontrado'
+      });
+    }
+    
+    const modelo = resultadoModelo[0];
+    const estadoActual = modelo.Estado;
+    
+    // Validar transición
+    const validacionTransicion = validarTransicionEstado(estadoActual, nuevoEstado);
+    if (!validacionTransicion.valido) {
+      return res.status(400).json({
+        success: false,
+        message: validacionTransicion.mensaje
+      });
+    }
+    
+    // Validar requisitos del nuevo estado
+    const datosCombinados = { ...modelo, ObservacionesRevision: observaciones };
+    const validacionRequisitos = validarRequisitosEstado(datosCombinados, nuevoEstado);
+    if (!validacionRequisitos.valido) {
+      return res.status(400).json({
+        success: false,
+        message: validacionRequisitos.mensaje,
+        detalles: validacionRequisitos.detalles
+      });
+    }
+    
+    // Actualizar estado del modelo
+    const queryUpdate = `
+      UPDATE Modelo 
+      SET Estado = N'${nuevoEstado}',
+          ObservacionesRevision = ${observaciones ? `N'${observaciones.replace(/'/g, "''")}'` : 'NULL'},
+          FechaModificacion = GETDATE(),
+          ModificadoPorID = ${usuarioID || 'NULL'}
+      WHERE ModeloID = ${id}
+    `;
+    
+    await db.queryRaw(queryUpdate);
+    
+    // Registrar cambio en historial de estados
+    const queryHistorialEstado = `
+      INSERT INTO ModeloEstado (ModeloID, EstadoAnterior, EstadoNuevo, UsuarioID, Observaciones, FechaCambio)
+      VALUES (
+        ${id}, 
+        N'${estadoActual}', 
+        N'${nuevoEstado}', 
+        ${usuarioID || 'NULL'}, 
+        ${observaciones ? `N'${observaciones.replace(/'/g, "''")}'` : 'NULL'},
+        GETDATE()
+      )
+    `;
+    
+    await db.queryRaw(queryHistorialEstado);
+    
+    logger.info(`Estado de modelo ${id} cambiado de '${estadoActual}' a '${nuevoEstado}'`);
+    
+    res.json({
+      success: true,
+      message: `Estado actualizado: ${obtenerNombreEstado(estadoActual)} → ${obtenerNombreEstado(nuevoEstado)}`,
+      data: {
+        modeloID: id,
+        estadoAnterior: estadoActual,
+        estadoNuevo: nuevoEstado,
+        observaciones: observaciones || null
+      }
+    });
+  } catch (error) {
+    logger.error('Error al cambiar estado del modelo:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al cambiar estado del modelo',
+      error: error.message
+    });
+  }
+};
+
+// POST /api/modelos/:id/validar-datos-minimos - Validar si datos mínimos están completos
+exports.validarDatosMinimos = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Obtener modelo
+    const queryModelo = `
+      SELECT * FROM Modelo WHERE ModeloID = ${id} AND Activo = 1
+    `;
+    const resultadoModelo = await db.queryRaw(queryModelo);
+    
+    if (resultadoModelo.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Modelo no encontrado'
+      });
+    }
+    
+    const modelo = resultadoModelo[0];
+    const validacion = validarDatosMinimos(modelo);
+    
+    res.json({
+      success: true,
+      data: {
+        modeloID: id,
+        datosCompletos: validacion.valido,
+        camposFaltantes: validacion.camposFaltantes,
+        mensaje: validacion.valido 
+          ? 'Todos los campos de datos mínimos están completos'
+          : `Faltan ${validacion.camposFaltantes.length} campos obligatorios`
+      }
+    });
+  } catch (error) {
+    logger.error('Error al validar datos mínimos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al validar datos mínimos',
+      error: error.message
+    });
+  }
+};
+
+// GET /api/modelos/estados - Obtener listado de estados disponibles
+exports.getEstados = async (req, res) => {
+  try {
+    const estadosInfo = Object.entries(ESTADOS).map(([key, value]) => ({
+      codigo: value,
+      nombre: obtenerNombreEstado(value),
+      edicion: permiteEdicion(value)
+    }));
+    
+    res.json({
+      success: true,
+      data: estadosInfo
+    });
+  } catch (error) {
+    logger.error('Error al obtener estados:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener estados',
       error: error.message
     });
   }

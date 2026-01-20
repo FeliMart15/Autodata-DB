@@ -9,6 +9,7 @@ import { Button } from '@components/ui/Button';
 import { useAuth } from '@context/AuthContext';
 import { modeloService } from '@services/modeloService';
 import { Modelo, ModeloEstado, UserRole } from '@types/index';
+import estadoService from '@services/estadoService';
 import { 
   Car, 
   Upload, 
@@ -39,24 +40,30 @@ export function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       // Cargar estadísticas por estado
-      const [allModels, minimosFetch, equipamientoFetch, revisionFetch, aprobacionFetch, corregirFetch, definitivoFetch] = await Promise.all([
+      const [allModels, importadosFetch, datosMinFetch, revMinFetch, corregirMinFetch, minimosAprobFetch, equipamientoFetch, revEquipFetch, corregirEquipFetch, definitivoFetch] = await Promise.all([
         modeloService.getAll({ page: 1, limit: 10 }),
-        modeloService.getAll({ estado: ModeloEstado.REQUISITOS_MINIMOS }),
+        modeloService.getAll({ estado: ModeloEstado.IMPORTADO }),
+        modeloService.getAll({ estado: ModeloEstado.DATOS_MINIMOS }),
+        modeloService.getAll({ estado: ModeloEstado.REVISION_MINIMOS }),
+        modeloService.getAll({ estado: ModeloEstado.CORREGIR_MINIMOS }),
+        modeloService.getAll({ estado: ModeloEstado.MINIMOS_APROBADOS }),
         modeloService.getAll({ estado: ModeloEstado.EQUIPAMIENTO_CARGADO }),
-        modeloService.getAll({ estado: ModeloEstado.EN_REVISION }),
-        modeloService.getAll({ estado: ModeloEstado.EN_APROBACION }),
-        modeloService.getAll({ estado: ModeloEstado.PARA_CORREGIR }),
+        modeloService.getAll({ estado: ModeloEstado.REVISION_EQUIPAMIENTO }),
+        modeloService.getAll({ estado: ModeloEstado.CORREGIR_EQUIPAMIENTO }),
         modeloService.getAll({ estado: ModeloEstado.DEFINITIVO })
       ]);
 
       setRecentModels(allModels.data || []);
       setStats({
         total: allModels.pagination?.total || 0,
-        requisitos_minimos: minimosFetch.pagination?.total || 0,
+        importado: importadosFetch.pagination?.total || 0,
+        datos_minimos: datosMinFetch.pagination?.total || 0,
+        revision_minimos: revMinFetch.pagination?.total || 0,
+        corregir_minimos: corregirMinFetch.pagination?.total || 0,
+        minimos_aprobados: minimosAprobFetch.pagination?.total || 0,
         equipamiento_cargado: equipamientoFetch.pagination?.total || 0,
-        en_revision: revisionFetch.pagination?.total || 0,
-        en_aprobacion: aprobacionFetch.pagination?.total || 0,
-        para_corregir: corregirFetch.pagination?.total || 0,
+        revision_equipamiento: revEquipFetch.pagination?.total || 0,
+        corregir_equipamiento: corregirEquipFetch.pagination?.total || 0,
         definitivo: definitivoFetch.pagination?.total || 0
       });
     } catch (error) {
@@ -75,15 +82,7 @@ export function DashboardPage() {
   }
 
   const getEstadoBadgeColor = (estado: string) => {
-    switch(estado) {
-      case ModeloEstado.REQUISITOS_MINIMOS: return 'bg-blue-100 text-blue-800';
-      case ModeloEstado.EQUIPAMIENTO_CARGADO: return 'bg-yellow-100 text-yellow-800';
-      case ModeloEstado.EN_REVISION: return 'bg-orange-100 text-orange-800';
-      case ModeloEstado.EN_APROBACION: return 'bg-purple-100 text-purple-800';
-      case ModeloEstado.PARA_CORREGIR: return 'bg-red-100 text-red-800';
-      case ModeloEstado.DEFINITIVO: return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    return estadoService.getEstadoBadgeColor(estado);
   };
 
   const getRoleQuickActions = () => {
@@ -92,17 +91,17 @@ export function DashboardPage() {
       case UserRole.ADMIN:
         return [
           { label: 'Importar Modelos CSV', href: '/import', icon: Upload, description: 'Importar desde archivo' },
-          { label: 'Agregar Equipamiento', href: '/agregar-equipamiento', icon: FileText, description: 'Completar modelos pendientes' },
+          { label: 'Cargar Datos', href: '/cargar-datos', icon: FileText, description: 'Completar datos mínimos y equipamiento' },
           { label: 'Ver Todos los Modelos', href: '/modelos', icon: Car, description: `${stats?.total || 0} modelos totales` },
         ];
       case UserRole.REVISION:
         return [
-          { label: 'Revisar Modelos', href: '/revision', icon: CheckCircle2, description: `${stats?.en_revision || 0} pendientes` },
+          { label: 'Revisar Modelos', href: '/revisar', icon: CheckCircle2, description: `${(stats?.revision_minimos || 0) + (stats?.revision_equipamiento || 0)} pendientes` },
           { label: 'Ver Modelos', href: '/modelos', icon: Car, description: 'Ver todos los modelos' },
         ];
       case UserRole.APROBACION:
         return [
-          { label: 'Aprobar Modelos', href: '/aprobacion', icon: CheckCircle2, description: `${stats?.en_aprobacion || 0} para aprobar` },
+          { label: 'Revisar Modelos', href: '/revisar', icon: CheckCircle2, description: `${(stats?.revision_minimos || 0) + (stats?.revision_equipamiento || 0)} para revisar` },
           { label: 'Ver Modelos', href: '/modelos', icon: Car, description: 'Ver todos los modelos' },
         ];
       default:
@@ -126,23 +125,22 @@ export function DashboardPage() {
           value={stats?.total || 0}
           icon={Car}
           description="En el sistema"
-          trend="+12% vs mes anterior"
         />
         <StatCard
-          title="En Revisión"
-          value={stats?.en_revision || 0}
+          title="Datos Mínimos"
+          value={(stats?.datos_minimos || 0) + (stats?.revision_minimos || 0) + (stats?.corregir_minimos || 0)}
           icon={Clock}
-          description="Esperando revisión"
+          description={`${stats?.revision_minimos || 0} en revisión`}
           className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate('/revision')}
+          onClick={() => navigate('/cargar-datos')}
         />
         <StatCard
-          title="Para Corregir"
-          value={stats?.para_corregir || 0}
+          title="Equipamiento"
+          value={(stats?.equipamiento_cargado || 0) + (stats?.revision_equipamiento || 0) + (stats?.corregir_equipamiento || 0)}
           icon={AlertCircle}
-          description="Requieren corrección"
+          description={`${stats?.revision_equipamiento || 0} en revisión`}
           className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate('/agregar-equipamiento')}
+          onClick={() => navigate('/cargar-datos')}
         />
         <StatCard
           title="Definitivos"
