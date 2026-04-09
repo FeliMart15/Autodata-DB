@@ -309,7 +309,9 @@ export interface LoginResponse {
 
 export interface CreateModeloRequest {
   id_marca: number;
+  codigoModelo?: string;
   modelo: string;
+  precioInicial?: number;
   familia?: string;
   origen?: string;
   combustible?: string;

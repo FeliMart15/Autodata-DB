@@ -23,7 +23,7 @@ exports.getPreciosByModelo = async (req, res) => {
       INNER JOIN Modelo m ON p.ModeloID = m.ModeloID
       LEFT JOIN Marca ma ON m.MarcaID = ma.MarcaID
       WHERE p.ModeloID = ${modeloId}
-      ORDER BY p.FechaVigenciaDesde DESC
+      ORDER BY p.FechaVigenciaDesde DESC, p.PrecioID DESC
     `);
     
     res.json({
@@ -65,7 +65,7 @@ exports.getPrecioActual = async (req, res) => {
       WHERE p.ModeloID = ${modeloId}
         AND p.FechaVigenciaDesde <= '${today}'
         AND (p.FechaVigenciaHasta IS NULL OR p.FechaVigenciaHasta >= '${today}')
-      ORDER BY p.FechaVigenciaDesde DESC
+      ORDER BY p.FechaVigenciaDesde DESC, p.PrecioID DESC
     `);
     
     if (precio.length === 0) {
@@ -117,7 +117,7 @@ exports.createPrecio = async (req, res) => {
       FROM PrecioModelo
       WHERE ModeloID = ${modeloId}
         AND FechaVigenciaHasta IS NULL
-      ORDER BY FechaVigenciaDesde DESC
+      ORDER BY FechaVigenciaDesde DESC, PrecioID DESC
     `);
     
     if (precioAnterior.length > 0) {

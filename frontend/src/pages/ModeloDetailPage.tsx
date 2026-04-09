@@ -15,7 +15,7 @@ import { HistorialSection } from '@components/historial/HistorialSection';
 import { VentasHistorial } from '@components/ventas/VentasHistorial';
 import { EmpadronamientosHistorial } from '@components/empadronamientos/EmpadronamientosHistorial';
 import { modeloService } from '@services/modeloService';
-import { Modelo, ModeloEstado, UserRole } from '@types/index';
+import { Modelo, ModeloEstado, UserRole } from '@/types/index';
 import { ArrowLeft, Save, Send, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '@context/AuthContext';
 import { useToast } from '@context/ToastContext';

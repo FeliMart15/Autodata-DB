@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { ImportFileData, ImportPreviewResult } from '@types/index';
+import { ImportFileData, ImportPreviewResult } from '@/types/index';
 
 export const importService = {
   directImport: async (file: File): Promise<any> => {

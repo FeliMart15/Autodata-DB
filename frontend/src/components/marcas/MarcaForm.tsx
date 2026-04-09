@@ -19,10 +19,12 @@ export function MarcaForm({ marca, onSubmit, onCancel, isLoading }: MarcaFormPro
   } = useForm<UpdateMarcaRequest>({
     defaultValues: marca
       ? {
+          codigoMarca: marca.CodigoMarca || '',
           marca: marca.Marca,
           paisOrigen: marca.PaisOrigen || '',
         }
       : {
+          codigoMarca: '',
           marca: '',
           paisOrigen: '',
         },
@@ -30,6 +32,30 @@ export function MarcaForm({ marca, onSubmit, onCancel, isLoading }: MarcaFormPro
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      
+      {!marca && (
+        <div className="space-y-2">
+          <Label htmlFor="codigoMarca">
+            Código de Marca <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="codigoMarca"
+            {...register('codigoMarca', {
+              required: 'El Código de la marca es requerido',
+              pattern: {
+                value: /^[0-9]+$/,
+                message: 'Solo se permiten números (ej: 0001)',
+              },
+            })}
+            placeholder="Ej: 0001"
+            className={errors.codigoMarca ? 'border-red-500' : ''}
+          />
+          {errors.codigoMarca && (
+            <p className="text-sm text-red-500">{errors.codigoMarca.message}</p>
+          )}
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="marca">
           Nombre de la Marca <span className="text-red-500">*</span>

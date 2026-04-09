@@ -8,7 +8,7 @@ import { LoadingSpinner } from '@components/ui/LoadingSpinner';
 import { Button } from '@components/ui/Button';
 import { useAuth } from '@context/AuthContext';
 import { modeloService } from '@services/modeloService';
-import { Modelo, ModeloEstado, UserRole } from '@types/index';
+import { Modelo, ModeloEstado, UserRole } from '@/types/index';
 import estadoService from '@services/estadoService';
 import { 
   Car, 

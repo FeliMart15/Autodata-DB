@@ -314,7 +314,10 @@ export default function EmpadronamientosPage() {
                       Cantidad
                     </th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Estado
+                      Precio Actual
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                      Fecha
                     </th>
                   </tr>
                 </thead>
@@ -337,16 +340,11 @@ export default function EmpadronamientosPage() {
                           placeholder="0"
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {empadronamiento.EmpadronamientoID ? (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-                            Guardado
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full">
-                            Nuevo
-                          </span>
-                        )}
+                      <td className="px-4 py-3 text-center text-sm text-gray-900">
+                        {empadronamiento.PrecioActual ? `$ ${empadronamiento.PrecioActual.toLocaleString()}` : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm text-gray-500">
+                        {empadronamiento.FechaPrecio ? new Date(empadronamiento.FechaPrecio).toLocaleDateString() : '-'}
                       </td>
                     </tr>
                   ))}

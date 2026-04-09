@@ -30,7 +30,9 @@ const obtenerEmpadronamientosPorFamilia = async (req, res) => {
                 e.EmpadronamientoID,
                 e.Periodo,
                 e.DepartamentoID,
-                e.FechaModificacion
+                e.FechaModificacion,
+                COALESCE((SELECT TOP 1 Precio FROM PrecioModelo pm WHERE pm.ModeloID = m.ModeloID ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC), m.Precio0KMInicial, m.PrecioInicial, 0) AS PrecioActual,
+                (SELECT TOP 1 FechaVigenciaDesde FROM PrecioModelo pm WHERE pm.ModeloID = m.ModeloID ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC) AS FechaPrecio
             FROM Modelo m
             INNER JOIN Marca ma ON m.MarcaID = ma.MarcaID
             INNER JOIN Familia f ON m.FamiliaID = f.FamiliaID

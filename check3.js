@@ -1,0 +1,1 @@
+const db = require('./src/config/db-simple'); async function main() { const res = await db.query('SELECT m.ModeloID, m.DescripcionModelo, m.PrecioInicial, m.Precio0KMInicial FROM Modelo m WHERE m.DescripcionModelo LIKE \'%Ranger%\''); console.log(res); process.exit(); } main();

@@ -8,6 +8,7 @@ export interface Marca {
 }
 
 export interface CreateMarcaRequest {
+  codigoMarca: string;
   marca: string;
   paisOrigen?: string;
 }

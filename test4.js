@@ -1,0 +1,1 @@
+const db = require("./src/config/db-simple"); async function run() { const r = await db.query("SELECT TOP 2 * FROM PrecioModelo p WHERE p.ModeloID = 63 AND p.FechaVigenciaDesde <= '2026-04-08' AND (p.FechaVigenciaHasta IS NULL OR p.FechaVigenciaHasta >= '2026-04-08') ORDER BY p.FechaVigenciaDesde DESC"); console.log(r); process.exit();} run();

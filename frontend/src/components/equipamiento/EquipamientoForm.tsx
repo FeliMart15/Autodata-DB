@@ -6,7 +6,7 @@ import { Input } from '@components/ui/Input';
 import { Alert } from '@components/ui/Alert';
 import { LoadingSpinner } from '@components/ui/LoadingSpinner';
 import { equipamientoService } from '@services/equipamientoService';
-import { EquipamientoModelo } from '@types/index';
+import { EquipamientoModelo } from '@/types/index';
 import { Save, CheckSquare, Square } from 'lucide-react';
 import { useToast } from '@context/ToastContext';
 

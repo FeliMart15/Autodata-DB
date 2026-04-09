@@ -1,0 +1,1 @@
+const db = require('./src/config/db-simple'); async function run() { const res = await db.query('SELECT * FROM PrecioModelo WHERE ModeloID = 63 ORDER BY FechaVigenciaDesde DESC, PrecioID DESC'); console.log(res); process.exit(); } run();

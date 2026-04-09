@@ -272,7 +272,10 @@ export default function VentasPage() {
                       Cantidad
                     </th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Estado
+                      Precio Actual
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                      Fecha
                     </th>
                   </tr>
                 </thead>
@@ -295,16 +298,11 @@ export default function VentasPage() {
                           placeholder="0"
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {venta.VentaID ? (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-                            Guardado
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full">
-                            Nuevo
-                          </span>
-                        )}
+                      <td className="px-4 py-3 text-center text-sm text-gray-900">
+                        {venta.PrecioActual ? `$ ${venta.PrecioActual.toLocaleString()}` : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm text-gray-500">
+                        {venta.FechaPrecio ? new Date(venta.FechaPrecio).toLocaleDateString() : '-'}
                       </td>
                     </tr>
                   ))}

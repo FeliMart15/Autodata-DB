@@ -1,0 +1,1 @@
+const db = require('./src/config/db-simple'); async function main() { const res = await db.query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'PrecioModelo\''); console.log(res); process.exit(); } main();

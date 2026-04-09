@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ModeloEstado } from '@types/index';
+import { ModeloEstado } from '@/types/index';
 import { cn } from '@utils/cn';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {

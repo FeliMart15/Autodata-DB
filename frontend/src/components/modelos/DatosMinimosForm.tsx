@@ -17,7 +17,7 @@ import {
 import { Label } from '@components/ui/label';
 import { modeloService } from '@services/modeloService';
 import { marcasService } from '@services/marcasService';
-import { Modelo, UpdateModeloRequest } from '@types/index';
+import { Modelo, UpdateModeloRequest } from '@/types/index';
 import { Marca as MarcaResponse, CreateMarcaRequest } from '@/types/marca';
 import { Save, CheckCircle2, Plus } from 'lucide-react';
 import { useToast } from '@context/ToastContext';
@@ -32,7 +32,9 @@ interface DatosMinimosFormProps {
 export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMinimosFormProps) {
   const [formData, setFormData] = useState<UpdateModeloRequest>({
     id_marca: modelo?.MarcaID || modelo?.id_marca || undefined,
+    codigoModelo: modelo?.CodigoModelo || '',
     modelo: modelo?.Modelo || modelo?.modelo || '',
+    precioInicial: modelo?.PrecioInicial || modelo?.Precio0KMInicial || undefined,
     familia: modelo?.Familia || modelo?.familia || '',
     origen: modelo?.Origen || modelo?.origen || modelo?.origen || '',
     combustible: modelo?.Combustible || modelo?.combustible || modelo?.combustible || '',
@@ -58,6 +60,7 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
   const [isLoadingMarcas, setIsLoadingMarcas] = useState(true);
   const [isCreateMarcaOpen, setIsCreateMarcaOpen] = useState(false);
   const [newMarca, setNewMarca] = useState<CreateMarcaRequest>({
+    codigoMarca: '',
     marca: '',
     paisOrigen: '',
   });
@@ -98,7 +101,7 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
       const createdMarca = await marcasService.create(newMarca);
       addToast('Marca creada exitosamente', 'success');
       setIsCreateMarcaOpen(false);
-      setNewMarca({ marca: '', paisOrigen: '' });
+        setNewMarca({ codigoMarca: '', marca: '', paisOrigen: '' });
       await loadMarcas();
       // Auto-seleccionar la marca recién creada
       handleChange('id_marca', createdMarca.MarcaID);
@@ -157,8 +160,8 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
   const handleManualSave = async () => {
     // Validación para nuevo modelo
     if (isNewModel) {
-      if (!formData.id_marca || !formData.modelo) {
-        addToast('Marca y Modelo son campos requeridos', 'error');
+      if (!formData.id_marca || !formData.modelo || !formData.codigoModelo) {
+        addToast('Marca, Código de Modelo y Nombre de Modelo son campos requeridos', 'error');
         return;
       }
     }
@@ -225,7 +228,7 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
                         <SelectTrigger label="Marca *">
                           <SelectValue placeholder="Seleccionar marca" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px] overflow-y-auto">
                           {isLoadingMarcas ? (
                             <SelectItem value="0" disabled>Cargando marcas...</SelectItem>
                           ) : marcas.length === 0 ? (
@@ -262,6 +265,14 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <Input
+                  label="Código Modelo *"
+                  value={formData.codigoModelo || ''}
+                  onChange={(e) => handleChange('codigoModelo', e.target.value)}
+                  disabled={readOnly}
+                  placeholder="Ej: 0012"
+                  required
+                />
+                <Input
                   label="Familia *"
                   value={formData.familia || ''}
                   onChange={(e) => handleChange('familia', e.target.value)}
@@ -269,6 +280,8 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
                   placeholder="SUV, Sedan, Hatchback, etc."
                   required
                 />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
                 <Select
                   value={formData.combustible || ''}
                   onValueChange={(value) => handleChange('combustible', value)}
@@ -286,14 +299,23 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
                     <SelectItem value="HibridoEnchufable">Híbrido Enchufable</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
                 <Input
                   label="Categoría *"
                   value={formData.categoria || ''}
                   onChange={(e) => handleChange('categoria', e.target.value)}
                   disabled={readOnly}
                   placeholder="Económico, Compacto, Premium, etc."
+                  required
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Precio Okm o Inicial (USD) *"
+                  type="number"
+                  value={formData.precioInicial || ''}
+                  onChange={(e) => handleChange('precioInicial', e.target.value !== '' ? Number(e.target.value) : undefined)}
+                  disabled={readOnly}
+                  placeholder="Ej: 25000"
                   required
                 />
               </div>
@@ -526,7 +548,7 @@ export function DatosMinimosForm({ modelo, onUpdate, readOnly = false }: DatosMi
               variant="outline"
               onClick={() => {
                 setIsCreateMarcaOpen(false);
-                setNewMarca({ marca: '', paisOrigen: '' });
+                setNewMarca({ codigoMarca: '', marca: '', paisOrigen: '' });
               }}
               disabled={isCreatingMarca}
             >

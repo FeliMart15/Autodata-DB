@@ -5,7 +5,7 @@ import { Badge } from '@components/ui/Badge';
 import { LoadingSpinner } from '@components/ui/LoadingSpinner';
 import { Button } from '@components/ui/Button';
 import { modeloService } from '@services/modeloService';
-import { ModeloHistorial } from '@types/index';
+import { ModeloHistorial } from '@/types/index';
 import { History, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';

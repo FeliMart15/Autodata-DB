@@ -11,6 +11,7 @@ import { ImportPage } from '@pages/ImportPage';
 import { ModelosPage } from '@pages/ModelosPage';
 import { ModeloDetailPage } from '@pages/ModeloDetailPage';
 import { MarcasPage } from '@pages/MarcasPage';
+import { PreciosPage } from '@pages/PreciosPage';
 import { CargarDatosPage } from '@pages/CargarDatosPage';
 import { RevisarPage } from '@pages/RevisarPage';
 import VentasPage from '@pages/VentasPage';
@@ -70,6 +71,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <Layout>
                 <ImportPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/precios"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <PreciosPage />
               </Layout>
             </ProtectedRoute>
           }

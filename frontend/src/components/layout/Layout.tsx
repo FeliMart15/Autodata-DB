@@ -20,7 +20,7 @@ import {
   Download,
 } from 'lucide-react';
 import { useAuth } from '@context/AuthContext';
-import { UserRole } from '@types/index';
+import { UserRole } from '@/types/index';
 import { cn } from '@utils/cn';
 
 const navigation = [

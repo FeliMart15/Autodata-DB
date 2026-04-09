@@ -6,7 +6,7 @@ import { DataTable } from '@components/ui/DataTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@components/ui/Dialog';
 import { LoadingSpinner } from '@components/ui/LoadingSpinner';
 import { precioService } from '@services/precioService';
-import { PrecioModelo } from '@types/index';
+import { PrecioModelo } from '@/types/index';
 import { Plus, DollarSign, TrendingUp } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';

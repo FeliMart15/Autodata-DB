@@ -20,6 +20,8 @@ export interface Venta {
   Cantidad: number;
   Periodo: string;
   FechaModificacion?: string;
+  PrecioActual?: number;
+  FechaPrecio?: string;
 }
 
 export interface VentaBatch {
@@ -45,6 +47,8 @@ export interface Empadronamiento {
   Cantidad: number;
   Periodo: string;
   FechaModificacion?: string;
+  PrecioActual?: number;
+  FechaPrecio?: string;
 }
 
 export interface EmpadronamientoBatch {

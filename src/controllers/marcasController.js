@@ -77,9 +77,9 @@ exports.getById = async (req, res) => {
 // POST /api/marcas - Crear nueva marca
 exports.create = async (req, res) => {
   try {
-    const { marca, paisOrigen } = req.body;
+    const { marca, paisOrigen, codigoMarca } = req.body;
     
-    logger.info(`Intentando crear marca: ${marca}, paisOrigen: ${paisOrigen}`);
+    logger.info(`Intentando crear marca: ${marca}, paisOrigen: ${paisOrigen}, CodigoMarca: ${codigoMarca}`);
     
     // Validaciones
     if (!marca || !marca.trim()) {
@@ -88,27 +88,31 @@ exports.create = async (req, res) => {
         message: 'El nombre de la marca es requerido'
       });
     }
+
+    if (!codigoMarca || !codigoMarca.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El Código de Marca es requerido'
+      });
+    }
     
     // Verificar si ya existe
     const existente = await db.queryRaw(
-      `SELECT MarcaID FROM Marca WHERE Descripcion = N'${marca.trim()}'`
+      `SELECT MarcaID FROM Marca WHERE Descripcion = N'${marca.trim()}' OR CodigoMarca = '${codigoMarca.trim()}'`
     );
     
     if (existente.length > 0) {
       return res.status(409).json({
         success: false,
-        message: 'Ya existe una marca con ese nombre'
+        message: 'Ya existe una marca con ese nombre o ese Código de Marca'
       });
     }
     
-    // Generar código de marca de 4 dígitos automáticamente
-    const codigoMarca = await obtenerProximoCodigoMarca(db);
-    
-    logger.info(`Código generado para marca: ${codigoMarca}`);
+    logger.info(`Código manual para marca: ${codigoMarca.trim()}`);
     
     // Insertar nueva marca
     const marcaData = {
-      CodigoMarca: codigoMarca,
+      CodigoMarca: codigoMarca.trim().padStart(4, '0'),
       Descripcion: marca.trim(),
       Origen: paisOrigen && paisOrigen.trim() ? paisOrigen.trim() : null
     };

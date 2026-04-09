@@ -420,173 +420,120 @@ const eliminarBatch = async (req, res) => {
  */
 const importarExcelAutos = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No se proporcionó ningún archivo excel' });
-    }
-
-    const { buffer } = req.file;
+    if (!req.file) return res.status(400).json({ success: false, message: 'No se proporcionó archivo excel' });
     const xlsx = require('xlsx');
-    const workbook = xlsx.read(buffer, { type: 'buffer' });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    // header: 1 returns array of arrays
-    const rows = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+    const rows = xlsx.utils.sheet_to_json(xlsx.read(req.file.buffer, { type: 'buffer' }).Sheets[xlsx.read(req.file.buffer, { type: 'buffer' }).SheetNames[0]], { header: 1 });
+    if (rows.length < 2) return res.status(400).json({ success: false, message: 'Archivo vacío' });
+    const getIdx = (name) => rows[0].findIndex(h => h === name);
+    const cols = { marcod: getIdx('MARCOD'), mardsc: getIdx('MARDSC'), marmodcod: getIdx('MARMODCOD'), marmoddsc: getIdx('MARMODDSC'), famdsc: getIdx('FAMDSC'), combdsc: getIdx('COMBDSC'), catdsc: getIdx('CATDSC'), maevalor: getIdx('MAEVALOR') };
+    if (cols.marcod === -1 || cols.mardsc === -1 || cols.marmodcod === -1 || cols.marmoddsc === -1) return res.status(400).json({ success: false, message: 'Faltan columnas requeridas' });
 
-    if (rows.length < 2) {
-      return res.status(400).json({ success: false, message: 'El archivo Excel está vacío o no tiene datos' });
-    }
-
-    const headers = rows[0];
-    const getIdx = (name) => headers.findIndex(h => h === name);
-
-    const idx_MARCOD = getIdx('MARCOD');
-    const idx_MARDSC = getIdx('MARDSC');
-    const idx_MARMODCOD = getIdx('MARMODCOD');
-    const idx_MARMODDSC = getIdx('MARMODDSC');
-    const idx_FAMCOD = getIdx('FAMCOD');
-    const idx_FAMDSC = getIdx('FAMDSC');
-    const idx_COMBCOD = getIdx('COMBCOD');
-    const idx_COMBDSC = getIdx('COMBDSC');
-    const idx_CATCOD = getIdx('CATCOD');
-    const idx_CATDSC = getIdx('CATDSC');
-    const idx_CATAIGCOD = getIdx('CATAIGCOD');
-    const idx_CATAIGDSC = getIdx('CATAIGDSC');
-
-    if (idx_MARCOD === -1 || idx_MARDSC === -1 || idx_MARMODCOD === -1 || idx_MARMODDSC === -1) {
-      return res.status(400).json({ success: false, message: 'Faltan columnas requeridas (MARCOD, MARDSC, MARMODCOD, MARMODDSC)' });
-    }
-
-    // Usaremos Map para validaciones
-    const marcasMap = new Map(); // MARCOD -> MARDSC
-    const familiasMap = new Map(); // FAMCOD -> { MarcaID, Nombre }
-    const modelosArray = []; // Para insertar después
-
-    // Parse data
+    const modelosArray = [];
     for (let i = 1; i < rows.length; i++) {
-        const r = rows[i];
-        if (!r || r.length === 0 || r[idx_MARCOD] == null) continue;
-  
-        const marcaId = parseInt(r[idx_MARCOD], 10);
-        const marcaDesc = r[idx_MARDSC] ? String(r[idx_MARDSC]).trim() : '';
-        marcasMap.set(marcaId, marcaDesc);
-  
-        let familiaId = null;
-        let familiaDesc = '';
-        if (idx_FAMCOD !== -1 && r[idx_FAMCOD] != null && !isNaN(parseInt(r[idx_FAMCOD], 10))) {
-          familiaId = parseInt(r[idx_FAMCOD], 10);
-          familiaDesc = r[idx_FAMDSC] ? String(r[idx_FAMDSC]).trim() : '';
-          familiasMap.set(familiaId, { MarcaID: marcaId, Nombre: familiaDesc });
-        }
-  
-        const combustibleDesc = idx_COMBDSC !== -1 && r[idx_COMBDSC] ? String(r[idx_COMBDSC]).trim() : null;
-        let categoriaDesc = null;
-        if (idx_CATDSC !== -1 && r[idx_CATDSC]) {
-          categoriaDesc = String(r[idx_CATDSC]).trim();
-        } else if (idx_CATAIGDSC !== -1 && r[idx_CATAIGDSC]) {
-          categoriaDesc = String(r[idx_CATAIGDSC]).trim();
-        }
-  
-        if (!isNaN(parseInt(r[idx_MARMODCOD], 10))) {
-            modelosArray.push({
-                modeloId: parseInt(r[idx_MARMODCOD], 10),
-                marcaId: marcaId,
-                familiaId: familiaId,
-                familiaDesc: familiaDesc,
-                modeloDesc: r[idx_MARMODDSC] ? String(r[idx_MARMODDSC]).trim() : '',
-                combustible: combustibleDesc,
-                categoria: categoriaDesc
-            });
-        }
+      const r = rows[i];
+      if (!r || r.length === 0 || r[cols.marcod] == null) continue;
+      modelosArray.push({ codMarca: String(r[cols.marcod]).trim().padStart(4, '0'), marcaDesc: r[cols.mardsc] ? String(r[cols.mardsc]).trim() : '', codModelo: String(r[cols.marmodcod]).trim().padStart(4, '0'), modeloDesc: r[cols.marmoddsc] ? String(r[cols.marmoddsc]).trim() : '', familiaDesc: cols.famdsc !== -1 && r[cols.famdsc] ? String(r[cols.famdsc]).trim() : null, combustible: cols.combdsc !== -1 && r[cols.combdsc] ? String(r[cols.combdsc]).trim() : null, categoria: cols.catdsc !== -1 && r[cols.catdsc] ? String(r[cols.catdsc]).trim() : null, precio: cols.maevalor !== -1 && r[cols.maevalor] ? parseFloat(r[cols.maevalor]) : null });
     }
 
-    // ==========================================
-    // FASE 1: Validación Pre-vuelo (Conflictos)
-    // ==========================================
-    
-    // 1. Validar Marcas
-    for (const [mId, mDesc] of marcasMap.entries()) {
-      const dbMarcaRes = await db.queryWithParams('SELECT Descripcion FROM Marca WHERE MarcaID = @p0', [mId]);
-      if (dbMarcaRes.length > 0) {
-        const dbMarcaName = dbMarcaRes[0].Descripcion;
-        const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (!normalize(dbMarcaName).includes(normalize(mDesc.substring(0,4))) && !normalize(mDesc).includes(normalize(dbMarcaName.substring(0,4)))) {
-          return res.status(400).json({ success: false, message: `Error de conflicto: Estás intentando cargar la marca "${mDesc}" con el ID ${mId}, pero en tu base de datos el ID ${mId} pertenece a "${dbMarcaName}".` });
-        }
-      }
-    }
-
-    // 2. Validar Modelos
+    const usuarioId = req.user ? req.user.UsuarioID || req.user.id || 1 : 1;
+    let creados = { marcas: 0, modelos: 0 };
+    const marcaIdMap = new Map();
     for (const mod of modelosArray) {
-      const dbModRes = await db.queryWithParams('SELECT DescripcionModelo FROM Modelo WHERE ModeloID = @p0', [mod.modeloId]);
-      if (dbModRes.length > 0) {
-        const dbModName = dbModRes[0].DescripcionModelo;
-        if (!dbModName.toLowerCase().includes(mod.modeloDesc.toLowerCase().substring(0,4)) && !mod.modeloDesc.toLowerCase().includes(dbModName.toLowerCase().substring(0,4))) {
-            return res.status(400).json({ success: false, message: `Error de conflicto: Estás intentando cargar el modelo "${mod.modeloDesc}" con el ID ${mod.modeloId}, pero en tu base de datos el ID ${mod.modeloId} pertenece a "${dbModName}".` });
+      if (!marcaIdMap.has(mod.codMarca)) {
+         let dbMarca = await db.queryWithParams('SELECT MarcaID FROM Marca WHERE CodigoMarca = @p0', [mod.codMarca]);
+         if (dbMarca.length === 0) {
+           const insertRes = await db.queryRaw(`INSERT INTO Marca (Descripcion, CodigoMarca, Activo) OUTPUT INSERTED.MarcaID VALUES (N'${mod.marcaDesc.replace(/'/g, "''")}', '${mod.codMarca}', 1)`);
+           if(insertRes && insertRes.length > 0) { marcaIdMap.set(mod.codMarca, insertRes[0].MarcaID); creados.marcas++; }
+         } else { marcaIdMap.set(mod.codMarca, dbMarca[0].MarcaID); }
+      }
+      const dbMarcaId = marcaIdMap.get(mod.codMarca);
+      if (!dbMarcaId) continue;
+      const codigoAutodata = `${mod.codMarca}${mod.codModelo}`;
+      const modExists = await db.queryWithParams(`SELECT ModeloID FROM Modelo WHERE CodigoAutodata = @p0 OR (MarcaID = @p1 AND CodigoModelo = @p2)`, [codigoAutodata, dbMarcaId, mod.codModelo]);
+      let modeloIdDb = null;
+      if (modExists.length === 0) {
+        const importador = null; // or from mod
+        const insertMod = await db.queryWithParams(`INSERT INTO Modelo (MarcaID, CodigoModelo, CodigoAutodata, DescripcionModelo, Familia, CombustibleCodigo, CategoriaCodigo, Estado, Activo, CreadoPorID, PrecioInicial) OUTPUT INSERTED.ModeloID VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, 'importado', 1, @p7, @p8)`, [dbMarcaId, mod.codModelo, codigoAutodata, mod.modeloDesc, mod.familiaDesc, mod.combustible, mod.categoria, usuarioId, mod.precio]);
+        if (insertMod && insertMod.length > 0) {
+           modeloIdDb = insertMod[0].ModeloID;
+           await db.queryWithParams(`INSERT INTO ModeloHistorial (ModeloID, Campo, ValorAnterior, ValorNuevo, Usuario) VALUES (@p0, 'Estado', NULL, 'importado', 'Sistema')`, [modeloIdDb]);
+           creados.modelos++;
         }
+      } else {
+         modeloIdDb = modExists[0].ModeloID;
+      }
+      if (modeloIdDb && mod.precio != null && !isNaN(mod.precio)) {
+         await db.queryWithParams(`INSERT INTO PrecioModelo (ModeloID, Precio, Moneda, VigenciaDesde, Observaciones, RegistradoPorID) VALUES (@p0, @p1, 'USD', GETDATE(), 'Precio importado Excel', @p2)`, [modeloIdDb, mod.precio, usuarioId]);
       }
     }
-
-    // ==========================================
-    // FASE 2: Inserción Respetando IDs
-    // ==========================================
-    const usuarioId = req.user ? req.user.UsuarioID : 1;
-    let creados = { marcas: 0, familias: 0, modelos: 0 };
-
-    for (const [mId, mDesc] of marcasMap.entries()) {
-      const exists = await db.queryWithParams('SELECT 1 FROM Marca WHERE MarcaID = @p0', [mId]);
-      if (exists.length === 0) {
-        await db.queryWithParams(`SET IDENTITY_INSERT Marca ON; INSERT INTO Marca (MarcaID, Descripcion, CodigoMarca) VALUES (@p0, @p1, SUBSTRING(@p1, 1, 4)); SET IDENTITY_INSERT Marca OFF;`, [mId, mDesc || 'DESC']);
-        creados.marcas++;
-      }
-    }
-
-    for (const [fId, fObj] of familiasMap.entries()) {
-      const exists = await db.queryWithParams('SELECT 1 FROM Familia WHERE FamiliaID = @p0', [fId]);
-      if (exists.length === 0) {
-        await db.queryWithParams(`SET IDENTITY_INSERT Familia ON; INSERT INTO Familia (FamiliaID, MarcaID, Nombre, Activo) VALUES (@p0, @p1, @p2, 1); SET IDENTITY_INSERT Familia OFF;`, [fId, fObj.MarcaID, fObj.Nombre]);
-        creados.familias++;
-      }
-    }
-
-    for (const mod of modelosArray) {
-      const exists = await db.queryWithParams('SELECT 1 FROM Modelo WHERE ModeloID = @p0', [mod.modeloId]);
-      if (exists.length === 0) {
-        const codigoModelo = `EXCEL-${mod.modeloId}`;
-        // Estado inicial importado (ID=1 si corresponde al flujo tradicional, aunque el string manda)
-        await db.queryWithParams(`
-          SET IDENTITY_INSERT Modelo ON;
-          INSERT INTO Modelo (ModeloID, MarcaID, FamiliaID, Familia, DescripcionModelo, CombustibleCodigo, CategoriaCodigo, Estado, EstadoID, Activo, CodigoModelo)
-          VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, 'importado', 1, 1, @p7);
-          SET IDENTITY_INSERT Modelo OFF;
-        `, [mod.modeloId, mod.marcaId, mod.familiaId, mod.familiaDesc, mod.modeloDesc, mod.combustible, mod.categoria, codigoModelo]);
-        
-        await db.queryWithParams(`
-          INSERT INTO ModeloEstado (ModeloID, EstadoAnterior, EstadoNuevo, UsuarioID, Observaciones)
-          VALUES (@p0, NULL, 'importado', @p1, 'Importado desde archivo Excel')
-        `, [mod.modeloId, usuarioId]);
-
-        creados.modelos++;
-      }
-    }
-
-    res.json({
-      success: true,
-      message: 'Base de datos actualizada con éxito.',
-      data: creados
-    });
-
+    return res.json({ success: true, message: 'Importación completada', data: { creados } });
   } catch (error) {
-    logger.error('Error importando Excel:', error);
-    res.status(500).json({ success: false, message: 'Error procesando archivo Excel', error: error.message });
+    return res.status(500).json({ success: false, message: 'Error al importar:' + error.message });
+  }
+};
+
+const importarExcelPrecios = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'Archivo no proporcionado.' });
+
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    const creados = { precios: 0, ignorados: 0 };
+    const usuarioId = req.user?.id || 1; // Ajusta si el auth token manda distinto el id
+
+    for (const row of data) {
+      const codigoAutodata = row['CODIGO CONCATENADO']?.toString().trim();
+      let ultimoPrecio = row['ULTIMO PRECIO'];
+
+      if (!codigoAutodata) continue;
+      
+      // Limpiar precio (puede venir como ' USD 25.000', o '#N/A')
+      if (typeof ultimoPrecio === 'string') {
+        ultimoPrecio = parseFloat(ultimoPrecio.replace(/[^\d.-]/g, ''));
+      }
+      
+      if (!ultimoPrecio || isNaN(ultimoPrecio)) {
+        creados.ignorados++;
+        continue;
+      }
+
+      // Buscar modelo por codigo concatenado
+      const modExists = await db.queryWithParams(`SELECT ModeloID FROM Modelo WHERE CodigoAutodata = @p0`, [codigoAutodata]);
+      if (modExists.length > 0) {
+        const modeloIdDb = modExists[0].ModeloID;
+
+        // Validar si ese precio ya es el actual, o insertar uno nuevo
+        // Para simplificar, inserta uno nuevo siempre que actualizamos
+        await db.queryWithParams(
+          `INSERT INTO PrecioModelo (ModeloID, Precio, Moneda, VigenciaDesde, Observaciones, RegistradoPorID) VALUES (@p0, @p1, 'USD', GETDATE(), 'Actualización por Excel Tabulado', @p2)`,
+          [modeloIdDb, ultimoPrecio, usuarioId]
+        );
+
+        // Opcional: Actualizar el PrecioInicial del modelo
+        await db.queryWithParams(`UPDATE Modelo SET PrecioInicial = @p0 WHERE ModeloID = @p1`, [ultimoPrecio, modeloIdDb]);
+
+        creados.precios++;
+        } else {
+          creados.ignorados++;
+        }
+      }
+
+    return res.status(200).json({ success: true, message: 'Precios importados con éxito', creados });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error al importar precios: ' + error.message });
   }
 };
 
 module.exports = {
-  upload, // Export multer middleware
-  importarCSV,
+  upload,
   importarExcelAutos,
+  importarExcelPrecios,
+  importarCSV,
   listarBatches,
   obtenerBatch,
   procesarBatch,
-  eliminarBatch
+  eliminarBatch,
+  importarExcelAutos
 };

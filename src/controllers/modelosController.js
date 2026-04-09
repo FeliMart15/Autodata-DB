@@ -180,7 +180,9 @@ exports.create = async (req, res) => {
   try {
     const { 
       marcaId, 
+      codigoModelo,
       modelo, 
+      precioInicial,
       familia,
       origen,
       combustible,
@@ -203,10 +205,10 @@ exports.create = async (req, res) => {
     const userId = req.user?.id || 1; // TODO: Obtener del token JWT
     
     // Validar campos requeridos
-    if (!marcaId || !modelo) {
+    if (!marcaId || !codigoModelo || !modelo) {
       return res.status(400).json({
         success: false,
-        message: 'Marca y Modelo son requeridos'
+        message: 'Marca, CodigoModelo y Modelo son requeridos'
       });
     }
     
@@ -221,16 +223,26 @@ exports.create = async (req, res) => {
     
     const codigoMarca = marcaExiste[0].CodigoMarca;
     
-    // Generar CodigoModelo (por marca) y CodigoAutodata
-    const codigoModelo = await obtenerProximoCodigoModelo(db, marcaId);
-    const codigoAutodata = generarCodigoAutodata(codigoMarca, codigoModelo);
+    // Generar CodigoAutodata uniendo el de la marca y el del modelo enviado manualmente
+    const modeloCod = String(codigoModelo).trim().padStart(4, '0');
+    const codigoAutodata = generarCodigoAutodata(codigoMarca, modeloCod);
     
-    logger.info(`Generando modelo - CodigoMarca: ${codigoMarca}, CodigoModelo: ${codigoModelo}, CodigoAutodata: ${codigoAutodata}`);
+    // Validar si el codigo de modelo ya existe para esta marca
+    const modeloExistente = await db.queryRaw(`SELECT ModeloID FROM Modelo WHERE CodigoAutodata = '${codigoAutodata}' OR (MarcaID = ${marcaId} AND CodigoModelo = '${modeloCod}')`);
+    if (modeloExistente.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'Ya existe un modelo con este Código para esta Marca'
+      });
+    }
+    
+    logger.info(`Guardando modelo - CodigoMarca: ${codigoMarca}, CodigoModelo: ${modeloCod}, CodigoAutodata: ${codigoAutodata}`);
     
     // Construir query dinámicamente con todos los campos
     const campos = ['MarcaID', 'CodigoModelo', 'CodigoAutodata', 'DescripcionModelo', 'Estado', 'Activo'];
-    const valores = [marcaId, `'${codigoModelo}'`, `'${codigoAutodata}'`, `N'${modelo.replace(/'/g, "''")}' `, `'creado'`, '1'];
+    const valores = [marcaId, `'${modeloCod}'`, `'${codigoAutodata}'`, `N'${modelo.replace(/'/g, "''")}'`, `'creado'`, '1'];
     
+    if (precioInicial) { campos.push('PrecioInicial'); valores.push(precioInicial); }
     if (familia) { campos.push('Familia'); valores.push(`N'${familia.replace(/'/g, "''")}'`); }
     if (origen) { campos.push('OrigenCodigo'); valores.push(`N'${origen.replace(/'/g, "''")}'`); }
     if (combustible) { campos.push('CombustibleCodigo'); valores.push(`N'${combustible.replace(/'/g, "''")}'`); }
@@ -275,6 +287,15 @@ exports.create = async (req, res) => {
         VALUES (${modeloId}, 'Estado', NULL, 'creado', 'Sistema')
       `;
       await db.queryRaw(historialQuery);
+
+      // Generar registro en la tabla de precio si se envió el precioInicial
+      if (precioInicial && !isNaN(precioInicial)) {
+        const precioQuery = `
+          INSERT INTO PrecioModelo (ModeloID, Precio, Moneda, VigenciaDesde, Observaciones, RegistradoPorID)
+          VALUES (${modeloId}, ${parseFloat(precioInicial)}, 'USD', GETDATE(), 'Precio inicial cargado manualmente', ${userId})
+        `;
+        await db.queryRaw(precioQuery);
+      }
     }
     
     // Obtener el modelo creado

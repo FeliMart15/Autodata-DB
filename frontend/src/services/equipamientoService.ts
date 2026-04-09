@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { EquipamientoModelo } from '@types/index';
+import { EquipamientoModelo } from '@/types/index';
 
 export const equipamientoService = {
   getByModeloId: async (idModelo: number): Promise<EquipamientoModelo | null> => {

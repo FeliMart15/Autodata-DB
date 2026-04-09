@@ -4,6 +4,7 @@ const {
   upload,
   importarCSV,
   importarExcelAutos,
+  importarExcelPrecios,
   listarBatches,
   obtenerBatch,
   procesarBatch,
@@ -12,6 +13,9 @@ const {
 
 // POST /api/import/excel-modelos - Subir Excel respetando IDs originales
 router.post('/excel-modelos', upload.single('file'), importarExcelAutos);
+
+// POST /api/import/excel-precios - Subir Excel con lista de precios tabulada
+router.post('/excel-precios', upload.single('file'), importarExcelPrecios);
 
 // POST /api/import/claudio - Upload e importar CSV
 router.post('/claudio', upload.single('file'), importarCSV);

@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { DashboardStats } from '@types/index';
+import { DashboardStats } from '@/types/index';
 
 interface ApiResponse<T> {
   success: boolean;

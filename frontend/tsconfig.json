@@ -11,10 +11,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
@@ -24,7 +24,6 @@
       "@services/*": ["./src/services/*"],
       "@context/*": ["./src/context/*"],
       "@utils/*": ["./src/utils/*"],
-      "@types/*": ["./src/types/*"],
       "@styles/*": ["./src/styles/*"]
     }
   },

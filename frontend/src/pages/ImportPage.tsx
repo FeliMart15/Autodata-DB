@@ -7,7 +7,7 @@ import { Alert } from '@components/ui/Alert';
 import { DataTable } from '@components/ui/DataTable';
 import { Badge } from '@components/ui/Badge';
 import { importService } from '@services/importService';
-import { ImportFileData, ImportPreviewResult } from '@types/index';
+import { ImportFileData, ImportPreviewResult } from '@/types/index';
 import { Upload, FileSpreadsheet, Download, CheckCircle2, XCircle } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useToast } from '@context/ToastContext';
