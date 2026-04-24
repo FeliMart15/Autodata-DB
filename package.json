@@ -1,11 +1,11 @@
 {
   "name": "autodata-backend",
   "version": "1.0.0",
-  "description": "Backend API para gestión de modelos de autos - Autodata Uruguay",
+  "description": "Backend API para gesti\u00f3n de modelos de autos - Autodata Uruguay",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "start": "node init && node src/index.js",
+    "dev": "node init && nodemon src/index.js"
   },
   "keywords": [
     "autodata",
