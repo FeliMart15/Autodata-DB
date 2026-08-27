@@ -34,7 +34,7 @@ const db = {
         // Escapar comillas simples
         value = `N'${param.replace(/'/g, "''")}'`;
       } else if (typeof param === 'number') {
-        value = param.toString();
+        value = Number.isFinite(param) ? param.toString() : 'NULL';
       } else if (typeof param === 'boolean') {
         value = param ? '1' : '0';
       } else if (param instanceof Date) {
@@ -64,7 +64,7 @@ const db = {
         // Escapar comillas simples
         value = `N'${param.replace(/'/g, "''")}'`;
       } else if (typeof param === 'number') {
-        value = param.toString();
+        value = Number.isFinite(param) ? param.toString() : 'NULL';
       } else if (typeof param === 'boolean') {
         value = param ? '1' : '0';
       } else if (param instanceof Date) {
@@ -168,6 +168,34 @@ const db = {
     const query = `DELETE FROM ${table} WHERE ${idField} = ${id}`;
     await db.queryRaw(query);
     return true;
+  },
+
+  // Ejecuta múltiples queries secuencialmente en UNA SOLA conexión persistente.
+  // Necesario para operaciones que dependen de estado de sesión como SET IDENTITY_INSERT.
+  // Devuelve array de resultados, uno por query.
+  querySequentialOnSingleConn: (queries) => {
+    return new Promise((resolve, reject) => {
+      sql.open(connectionString, (openErr, conn) => {
+        if (openErr) return reject(openErr);
+
+        const results = [];
+        const runNext = (i) => {
+          if (i >= queries.length) {
+            conn.close();
+            return resolve(results);
+          }
+          conn.query(queries[i], (err, rows) => {
+            if (err) {
+              conn.close();
+              return reject(err);
+            }
+            results.push(rows || []);
+            runNext(i + 1);
+          });
+        };
+        runNext(0);
+      });
+    });
   },
 
   close: () => {

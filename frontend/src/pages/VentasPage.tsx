@@ -171,7 +171,7 @@ export default function VentasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Carga de Ventas</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             Registre las ventas mensuales por modelo
           </p>
         </div>
@@ -187,7 +187,7 @@ export default function VentasPage() {
               type="month"
               value={periodo}
               onChange={e => setPeriodo(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
             />
           </div>
 
@@ -197,7 +197,7 @@ export default function VentasPage() {
             <select
               value={marcaSeleccionada || ''}
               onChange={e => setMarcaSeleccionada(e.target.value ? Number(e.target.value) : null)}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
             >
               <option value="">Seleccione marca...</option>
               {marcas.map(marca => (
@@ -215,7 +215,7 @@ export default function VentasPage() {
               value={familiaSeleccionada || ''}
               onChange={e => setFamiliaSeleccionada(e.target.value ? Number(e.target.value) : null)}
               disabled={!marcaSeleccionada || familias.length === 0}
-              className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+              className="w-full px-3 py-2 border rounded-md bg-background text-foreground disabled:bg-muted"
             >
               <option value="">Seleccione familia...</option>
               {familias.map(familia => (
@@ -246,46 +246,46 @@ export default function VentasPage() {
             <h2 className="text-xl font-semibold">
               {marcaNombre} - {familias.find(f => f.FamiliaID === familiaSeleccionada)?.Nombre || ''}
             </h2>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {ventas.length} modelos encontrados
             </span>
           </div>
 
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Cargando...</div>
+            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
           ) : ventas.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               No hay modelos disponibles para esta combinación
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Modelo
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
                       Periodo Anterior
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
                       Cantidad
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Precio Actual
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
+                      Precio
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
                       Fecha
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {ventas.map(venta => (
-                    <tr key={venta.ModeloID} className="hover:bg-gray-50">
+                    <tr key={venta.ModeloID} className="hover:bg-muted/50">
                       <td className="px-4 py-3 text-sm">
                         {venta.DescripcionModelo}
                       </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-500">
+                      <td className="px-4 py-3 text-center text-sm text-muted-foreground">
                         {datosAnteriores[venta.ModeloID] || 0}
                       </td>
                       <td className="px-4 py-3">
@@ -294,14 +294,24 @@ export default function VentasPage() {
                           min="0"
                           value={venta.Cantidad || ''}
                           onChange={e => handleCantidadChange(venta.ModeloID, e.target.value)}
-                          className="w-24 px-3 py-1 text-center border rounded-md focus:ring-2 focus:ring-blue-500"
+                          className="w-24 px-3 py-1 text-center border rounded-md bg-background text-foreground focus:ring-2 focus:ring-blue-500"
                           placeholder="0"
                         />
                       </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-900">
-                        {venta.PrecioActual ? `$ ${venta.PrecioActual.toLocaleString()}` : '-'}
+                      <td className="px-4 py-3 text-center text-sm text-foreground">
+                        {venta.VentaID && venta.PrecioGuardado != null ? (
+                          <span title="Precio congelado al momento de cargar esta venta">
+                            $ {venta.PrecioGuardado.toLocaleString()}
+                          </span>
+                        ) : venta.PrecioActual ? (
+                          <span className="text-muted-foreground" title="Precio actual: se congelará con este valor al guardar">
+                            $ {venta.PrecioActual.toLocaleString()} <span className="text-xs">(a guardar)</span>
+                          </span>
+                        ) : (
+                          '-'
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-500">
+                      <td className="px-4 py-3 text-center text-sm text-muted-foreground">
                         {venta.FechaPrecio ? new Date(venta.FechaPrecio).toLocaleDateString() : '-'}
                       </td>
                     </tr>
@@ -315,8 +325,8 @@ export default function VentasPage() {
 
       {/* Mensaje de ayuda */}
       {!marcaSeleccionada && (
-        <Card className="p-6 bg-blue-50 border-blue-200">
-          <p className="text-blue-800">
+        <Card className="p-6 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50">
+          <p className="text-blue-800 dark:text-blue-300">
             👆 Seleccione un periodo, marca y familia para comenzar a cargar ventas
           </p>
         </Card>

@@ -20,7 +20,10 @@ export interface Venta {
   Cantidad: number;
   Periodo: string;
   FechaModificacion?: string;
+  /** Precio actual del modelo (referencia / preview de lo que se congelará si aún no hay venta guardada) */
   PrecioActual?: number;
+  /** Precio congelado al momento de crear la venta (null si todavía no se guardó ninguna para este período) */
+  PrecioGuardado?: number | null;
   FechaPrecio?: string;
 }
 
@@ -47,7 +50,10 @@ export interface Empadronamiento {
   Cantidad: number;
   Periodo: string;
   FechaModificacion?: string;
+  /** Precio actual del modelo (referencia / preview de lo que se congelará si aún no hay empadronamiento guardado) */
   PrecioActual?: number;
+  /** Precio congelado al momento de crear el empadronamiento (null si todavía no se guardó ninguno para este período) */
+  PrecioGuardado?: number | null;
   FechaPrecio?: string;
 }
 

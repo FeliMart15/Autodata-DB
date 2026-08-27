@@ -1409,7 +1409,7 @@ FechaUltimoAcceso DATETIME2
 
 | # | Username | Contraseña | Rol | Nombre |
 |---|----------|------------|-----|--------|
-| 1 | `santiago.martinez` | `Admin2024!` | **admin** | Santiago Martínez |
+| 1 | `` | `Admin2024!` | **admin** | Santiago Martínez |
 | 2 | `claudio.bustillo` | `Aprobador2024!` | **aprobacion** | Claudio Bustillo |
 | 3 | `yanina.dotti` | `Revisor2024!` | **revision** | Yanina Dotti |
 | 4 | `noel.capurro` | `Entrada2024!` | **entrada_datos** | Noel Capurro |

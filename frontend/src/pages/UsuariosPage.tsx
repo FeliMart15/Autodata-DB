@@ -98,10 +98,10 @@ export function UsuariosPage() {
 
   const getRolBadge = (rol: string) => {
     const colors: Record<string, string> = {
-      admin: 'bg-red-100 text-red-800',
-      aprobacion: 'bg-purple-100 text-purple-800',
-      revision: 'bg-blue-100 text-blue-800',
-      entrada_datos: 'bg-green-100 text-green-800',
+      admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+      aprobacion: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+      revision: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      entrada_datos: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
     };
 
     const labels: Record<string, string> = {
@@ -112,7 +112,7 @@ export function UsuariosPage() {
     };
 
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[rol] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[rol] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}`}>
         {labels[rol] || rol}
       </span>
     );
@@ -197,11 +197,11 @@ export function UsuariosPage() {
                     <TableCell>{getRolBadge(usuario.Rol)}</TableCell>
                     <TableCell>
                       {usuario.Activo ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                           Activo
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
                           Inactivo
                         </span>
                       )}

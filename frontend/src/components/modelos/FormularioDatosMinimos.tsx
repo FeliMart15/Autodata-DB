@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Modelo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
+import { MODELO_TEXT_OPTIONS, MODELO_NUMERIC_LIMITS, maskNumericInput } from '@components/equipamiento/equipamientoFieldConfig';
+
+const normalizeTipo = (v?: string): string => {
+  if (!v) return '';
+  const l = v.toLowerCase().replace(/[^a-z]/g, '');
+  if (l.startsWith('autom')) return 'Automóvil';
+  if (l.startsWith('com')) return 'Comercial';
+  return v;
+};
 
 interface FormularioDatosMinimosProp {
   modelo: Modelo;
@@ -23,11 +32,13 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
     SegmentacionAutodata: modelo.SegmentacionAutodata || '',
     Carroceria: modelo.Carroceria || '',
     OrigenCodigo: modelo.OrigenCodigo || '',
-    Cilindros: modelo.Cilindros || undefined,
-    Valvulas: modelo.Valvulas || undefined,
-    CC: modelo.CC || undefined,
-    HP: modelo.HP || undefined,
+    CombustibleCodigo: modelo.CombustibleCodigo || '',
+    Cilindros: modelo.Cilindros ?? undefined,
+    Valvulas: modelo.Valvulas ?? undefined,
+    CC: modelo.CC ?? undefined,
+    HP: modelo.HP ?? undefined,
     TipoCajaAut: modelo.TipoCajaAut || '',
+    Tipo: normalizeTipo(modelo.Tipo),
     Puertas: modelo.Puertas || undefined,
     Asientos: modelo.Asientos || undefined,
     TipoMotor: modelo.TipoMotor || '',
@@ -63,11 +74,13 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
       SegmentacionAutodata: modelo.SegmentacionAutodata || '',
       Carroceria: modelo.Carroceria || '',
       OrigenCodigo: modelo.OrigenCodigo || '',
-      Cilindros: modelo.Cilindros || undefined,
-      Valvulas: modelo.Valvulas || undefined,
-      CC: modelo.CC || undefined,
-      HP: modelo.HP || undefined,
+      CombustibleCodigo: modelo.CombustibleCodigo || '',
+      Cilindros: modelo.Cilindros ?? undefined,
+      Valvulas: modelo.Valvulas ?? undefined,
+      CC: modelo.CC ?? undefined,
+      HP: modelo.HP ?? undefined,
       TipoCajaAut: modelo.TipoCajaAut || '',
+      Tipo: normalizeTipo(modelo.Tipo),
       Puertas: modelo.Puertas || undefined,
       Asientos: modelo.Asientos || undefined,
       TipoMotor: modelo.TipoMotor || '',
@@ -83,7 +96,7 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
     if (onChange) {
       onChange(newData);
     }
-  }, [modelo.ModeloID, modelo.Carroceria, modelo.Cilindros, modelo.HP]); // Depender de campos clave para detectar actualizaciones
+  }, [modelo.ModeloID, modelo.Carroceria, modelo.Cilindros, modelo.HP, modelo.Tipo]); // Depender de campos clave para detectar actualizaciones
 
   const handleChange = (field: keyof Modelo, value: string | number | undefined) => {
     const newData = { ...formData, [field]: value };
@@ -97,27 +110,27 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
   return (
     <div>
       {/* Indicador de progreso */}
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 rounded-lg">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-blue-900">
+          <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
             Progreso de Datos Mínimos
           </span>
-          <span className="text-sm font-semibold text-blue-700">
+          <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
             {camposCompletos} / {camposObligatorios.length} campos obligatorios
           </span>
         </div>
-        <div className="w-full bg-blue-200 rounded-full h-2">
-          <div 
+        <div className="w-full bg-blue-200 dark:bg-blue-950/50 rounded-full h-2">
+          <div
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
             style={{ width: `${(camposCompletos / camposObligatorios.length) * 100}%` }}
           />
         </div>
         {camposCompletos < camposObligatorios.length ? (
-          <p className="text-xs text-blue-700 mt-2">
+          <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
             💾 Puedes guardar tu progreso con "Guardar Progreso" y continuar después. Para enviar a revisión necesitas completar los {camposObligatorios.length - camposCompletos} campos restantes.
           </p>
         ) : (
-          <p className="text-xs text-green-700 mt-2">
+          <p className="text-xs text-green-700 dark:text-green-400 mt-2">
             ✅ Todos los campos obligatorios completados. Ya puedes enviar a revisión.
           </p>
         )}
@@ -175,22 +188,7 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   placeholder="Seleccionar o escribir..."
                 />
                 <datalist id="carrocerias">
-                  <option value="BOX" />
-                  <option value="Cab. Extendida" />
-                  <option value="Cabrio" />
-                  <option value="CAMION" />
-                  <option value="Chasis Cab." />
-                  <option value="City Car" />
-                  <option value="Coupé" />
-                  <option value="DC" />
-                  <option value="FURGON" />
-                  <option value="Hatch" />
-                  <option value="Minibus" />
-                  <option value="Omnibus" />
-                  <option value="PUP" />
-                  <option value="Rural" />
-                  <option value="Sedán" />
-                  <option value="SUV" />
+                  {MODELO_TEXT_OPTIONS.Carroceria.map(o => <option key={o} value={o} />)}
                 </datalist>
               </div>
 
@@ -292,18 +290,40 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
 
               <div>
                 <label className="block text-sm font-medium mb-1">
+                  Combustible
+                </label>
+                <input
+                  list="combustibles"
+                  value={formData.CombustibleCodigo || ''}
+                  onChange={(e) => handleChange('CombustibleCodigo', e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                  disabled={readonly}
+                  placeholder="Seleccionar o escribir..."
+                />
+                <datalist id="combustibles">
+                  <option value="NAFTA" />
+                  <option value="DIESEL" />
+                  <option value="ELÉCTRICO" />
+                  <option value="HÍBRIDO" />
+                  <option value="GNC" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
                   Cilindros <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  onKeyDown={(e) => { if(['e','E','+','-','.'].includes(e.key)) e.preventDefault(); }}
-                  value={formData.Cilindros || ''}
-                  onChange={(e) => handleChange('Cilindros', parseInt(e.target.value) || undefined)}
+                  type="text"
+                  inputMode="numeric"
+                  value={formData.Cilindros ?? ''}
+                  onChange={(e) => {
+                    const masked = maskNumericInput(e.target.value, MODELO_NUMERIC_LIMITS.Cilindros);
+                    handleChange('Cilindros', masked === '' ? undefined : parseInt(masked, 10));
+                  }}
                   className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={readonly}
-                  min="0"
-                  max="99"
                   placeholder="4"
                 />
               </div>
@@ -313,15 +333,16 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   Válvulas <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  onKeyDown={(e) => { if(['e','E','+','-','.'].includes(e.key)) e.preventDefault(); }}
-                  value={formData.Valvulas || ''}
-                  onChange={(e) => handleChange('Valvulas', parseInt(e.target.value) || undefined)}
+                  type="text"
+                  inputMode="numeric"
+                  value={formData.Valvulas ?? ''}
+                  onChange={(e) => {
+                    const masked = maskNumericInput(e.target.value, MODELO_NUMERIC_LIMITS.Valvulas);
+                    handleChange('Valvulas', masked === '' ? undefined : parseInt(masked, 10));
+                  }}
                   className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={readonly}
-                  min="0"
-                  max="99"
                   placeholder="16"
                 />
               </div>
@@ -331,15 +352,16 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   Cilindrada (CC) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  onKeyDown={(e) => { if(['e','E','+','-','.'].includes(e.key)) e.preventDefault(); }}
-                  value={formData.CC || ''}
-                  onChange={(e) => handleChange('CC', parseInt(e.target.value) || undefined)}
+                  type="text"
+                  inputMode="numeric"
+                  value={formData.CC ?? ''}
+                  onChange={(e) => {
+                    const masked = maskNumericInput(e.target.value, MODELO_NUMERIC_LIMITS.CC);
+                    handleChange('CC', masked === '' ? undefined : parseInt(masked, 10));
+                  }}
                   className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={readonly}
-                  min="0"
-                  max="9999"
                   placeholder="1500"
                 />
               </div>
@@ -349,16 +371,16 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   Potencia (HP) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  onKeyDown={(e) => { if(['e','E','+','-','.'].includes(e.key)) e.preventDefault(); }}
+                  type="text"
+                  inputMode="numeric"
                   value={formData.HP || ''}
-                  onChange={(e) => handleChange('HP', parseFloat(e.target.value) || undefined)}
+                  onChange={(e) => {
+                    const masked = maskNumericInput(e.target.value, MODELO_NUMERIC_LIMITS.HP);
+                    handleChange('HP', masked === '' ? undefined : parseInt(masked, 10));
+                  }}
                   className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={readonly}
-                  min="0"
-                  max="9999"
-                  step="0.1"
                   placeholder="150"
                 />
               </div>
@@ -371,7 +393,7 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Tipo de Caja Aut. <span className="text-red-500">*</span>
+                  Tipo de Caja <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.TipoCajaAut || ''}
@@ -385,6 +407,21 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   <option value="Manual">Manual</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Tipo
+                </label>
+                <input
+                  type="text"
+                  value={formData.Tipo || ''}
+                  onChange={(e) => handleChange('Tipo', e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
+                  disabled={readonly}
+                  placeholder="AUTOMOVIL / COMERCIAL"
+                />
+              </div>
+
             </div>
           </div>
 
@@ -397,15 +434,16 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   Puertas <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  onKeyDown={(e) => { if(['e','E','+','-','.'].includes(e.key)) e.preventDefault(); }}
+                  type="text"
+                  inputMode="numeric"
                   value={formData.Puertas || ''}
-                  onChange={(e) => handleChange('Puertas', parseInt(e.target.value) || undefined)}
+                  onChange={(e) => {
+                    const masked = maskNumericInput(e.target.value, MODELO_NUMERIC_LIMITS.Puertas);
+                    handleChange('Puertas', masked === '' ? undefined : parseInt(masked, 10));
+                  }}
                   className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={readonly}
-                  min="2"
-                  max="6"
                   placeholder="4"
                 />
               </div>
@@ -415,15 +453,16 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   Asientos <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  onKeyDown={(e) => { if(['e','E','+','-','.'].includes(e.key)) e.preventDefault(); }}
+                  type="text"
+                  inputMode="numeric"
                   value={formData.Asientos || ''}
-                  onChange={(e) => handleChange('Asientos', parseInt(e.target.value) || undefined)}
+                  onChange={(e) => {
+                    const masked = maskNumericInput(e.target.value, MODELO_NUMERIC_LIMITS.Asientos);
+                    handleChange('Asientos', masked === '' ? undefined : parseInt(masked, 10));
+                  }}
                   className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={readonly}
-                  min="1"
-                  max="50"
                   placeholder="5"
                 />
               </div>
@@ -449,7 +488,7 @@ export const FormularioDatosMinimos: React.FC<FormularioDatosMinimosProp> = ({
                   <button
                     type="button"
                     onClick={onCancel}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-border rounded-md hover:bg-muted transition-colors"
                   >
                     Cancelar
                   </button>

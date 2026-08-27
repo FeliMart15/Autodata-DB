@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const modelosController = require('../controllers/modelosController');
+const { requireAdmin } = require('../middleware/auth');
 
 // Rutas de consulta
 router.get('/', modelosController.getAll);
@@ -12,6 +13,9 @@ router.get('/:id', modelosController.getById);
 router.post('/', modelosController.create);
 router.put('/:id', modelosController.update);
 router.delete('/:id', modelosController.delete);
+
+// Eliminar permanentemente (solo admin)
+router.delete('/:id/permanente', requireAdmin, modelosController.deletePermanente);
 
 // Workflow endpoints - NUEVO SISTEMA
 router.post('/:id/cambiar-estado', modelosController.cambiarEstado);

@@ -55,10 +55,9 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
     const payload = {
       ...formData,
       marcaId: Number(formData.id_marca),
-      id_marca: Number(formData.id_marca),
-      EstadoID: 2 // Assuming 2 means MINIMOS_APROBADOS/CREADO (not definitivo/en_revision yet)
+      id_marca: Number(formData.id_marca)
     };
-    
+
     await onSave(payload as CreateModeloRequest & { marcaId?: number });
   };
 
@@ -72,10 +71,9 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
     const payload = {
       ...formData,
       marcaId: Number(formData.id_marca),
-      id_marca: Number(formData.id_marca),
-      EstadoID: 3 // Assuming 3 means "EN_REVISION"
+      id_marca: Number(formData.id_marca)
     };
-    
+
     await onSave(payload as CreateModeloRequest & { marcaId?: number });
   };
 
@@ -92,7 +90,7 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
                 Marca <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 required
                 value={formData.id_marca || ''}
                 onChange={(e) => handleChange('id_marca', Number(e.target.value))}
@@ -109,7 +107,7 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
             <div>
               <label className="block text-sm font-medium mb-1">Código de Modelo <span className="text-red-500">*</span></label>
               <input
-                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 required
                 placeholder="Ej. 0104"
                 value={formData.codigoModelo || ''}
@@ -122,7 +120,7 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
                 Modelo (Descripción) <span className="text-red-500">*</span>
               </label>
               <input
-                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 required
                 placeholder="Ej. COROLLA 2.0"
                 value={formData.modelo || ''}
@@ -135,7 +133,7 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
                 Familia <span className="text-red-500">*</span>
               </label>
               <input
-                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 required
                 placeholder="Ej. TOYOTA COROLLA"
                 value={formData.familia || ''}
@@ -149,7 +147,7 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 required
                 placeholder="Ej. 2026"
                 value={formData.año || ''}
@@ -163,7 +161,7 @@ export const FormularioCargaModelo: React.FC<FormularioCargaModeloProps> = ({
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 required
                 placeholder="Ej. 25000"
                 value={formData.precioInicial || ''}

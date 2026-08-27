@@ -80,7 +80,7 @@ exports.create = async (req, res) => {
   try {
     const { marca, paisOrigen, codigoMarca } = req.body;
     
-    logger.info(`Intentando crear marca: ${marca}, paisOrigen: ${paisOrigen}, CodigoMarca: ${codigoMarca}`);
+    logger.info(`Intentando crear/actualizar marca: ${marca}, paisOrigen: ${paisOrigen}, CodigoMarca: ${codigoMarca}`);
     
     // Validaciones
     if (!marca || !marca.trim()) {
@@ -93,53 +93,64 @@ exports.create = async (req, res) => {
     if (!codigoMarca || !codigoMarca.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'El Código de Marca es requerido'
+        message: 'El MARCOD (Código de Marca) es requerido'
+      });
+    }
+    
+    // Normalizar CodigoMarca y obtener ID
+    const normCod = codigoMarca.trim().padStart(4, '0');
+    const marcaIdInt = parseInt(normCod, 10);
+
+    if (isNaN(marcaIdInt)) {
+      return res.status(400).json({
+        success: false,
+        message: 'El MARCOD debe ser un valor numérico válido'
       });
     }
     
     // Verificar si ya existe
     const existente = await db.queryRaw(
-      `SELECT MarcaID FROM Marca WHERE Descripcion = N'${marca.trim()}' OR CodigoMarca = '${codigoMarca.trim()}'`
+      `SELECT MarcaID, Descripcion FROM Marca WHERE MarcaID = ${marcaIdInt} OR CodigoMarca = '${normCod}'`
     );
     
+    let resultMarcaId;
+    
     if (existente.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: 'Ya existe una marca con ese nombre o ese Código de Marca'
-      });
+      // Upsert: Actualizar marca existente
+      resultMarcaId = existente[0].MarcaID;
+      await db.queryRaw(`
+        UPDATE Marca 
+        SET Descripcion = N'${marca.trim()}', 
+            Origen = ${paisOrigen && paisOrigen.trim() ? `N'${paisOrigen.trim()}'` : 'NULL'}
+        WHERE MarcaID = ${resultMarcaId}
+      `);
+      logger.info(`Marca existente actualizada (ID: ${resultMarcaId})`);
+    } else {
+      // Marca.MarcaID no tiene IDENTITY: se inserta el ID explícito directo, sin IDENTITY_INSERT.
+      await db.queryRaw(`
+        INSERT INTO Marca (MarcaID, CodigoMarca, Descripcion, Origen)
+        VALUES (${marcaIdInt}, '${normCod}', N'${marca.trim()}', ${paisOrigen && paisOrigen.trim() ? `N'${paisOrigen.trim()}'` : 'NULL'});
+      `);
+      resultMarcaId = marcaIdInt;
+      logger.info(`Marca creada con explícito ID: ${resultMarcaId} y CodigoMarca: ${normCod}`);
     }
-    
-    logger.info(`Código manual para marca: ${codigoMarca.trim()}`);
-    
-    // Insertar nueva marca
-    const marcaData = {
-      CodigoMarca: codigoMarca.trim().padStart(4, '0'),
-      Descripcion: marca.trim(),
-      Origen: paisOrigen && paisOrigen.trim() ? paisOrigen.trim() : null
-    };
-    
-const nuevaMarcaResult = await db.insert('Marca', marcaData);
-    const resultMarcaId = nuevaMarcaResult.MarcaID || nuevaMarcaResult.id;
-    logger.info(`Marca creada con ID: ${resultMarcaId} y CodigoMarca: ${codigoMarca}`);
 
-    // Obtener la marca creada
+    // Obtener la marca creada/actualizada
     const nuevaMarca = await db.queryRaw(
       `SELECT MarcaID, CodigoMarca, Descripcion AS Marca, Origen AS PaisOrigen, FechaCreacion
        FROM Marca WHERE MarcaID = ${resultMarcaId}`
     );
-
-    logger.info(`Marca obtenida de BD: ${nuevaMarca.length > 0 ? nuevaMarca[0].Marca : 'desconocida'} (ID: ${resultMarcaId})`);
     
     res.status(201).json({
       success: true,
-      message: 'Marca creada exitosamente',
+      message: existente.length > 0 ? 'Marca actualizada exitosamente' : 'Marca creada exitosamente',
       data: nuevaMarca[0]
     });
   } catch (error) {
-    logger.error('Error al crear marca:', error);
+    logger.error('Error al crear/actualizar marca:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al crear marca',
+      message: 'Error al procesar la marca',
       error: error.message
     });
   }
@@ -279,29 +290,32 @@ exports.importarExcel = async (req, res) => {
         continue;
       }
 
-      // Check if it already exists
-      const existente = await db.queryRaw(`SELECT MarcaID FROM Marca WHERE CodigoMarca = '${marcod}'`);
-      if (existente.length > 0) {
+      const marcaIdInt = parseInt(marcod, 10);
+      if (isNaN(marcaIdInt)) {
         omitidas++;
-        errores.push(`Fila ${i + 2}: El código de marca '${marcod}' ya existe.`);
+        errores.push(`Fila ${i + 2}: MARCOD '${marcod}' no es un número válido.`);
         continue;
       }
 
+      // Check if it already exists (por ID o por código)
+      const existente = await db.queryRaw(`SELECT MarcaID FROM Marca WHERE MarcaID = ${marcaIdInt} OR CodigoMarca = '${marcod}'`);
+      if (existente.length > 0) {
+        omitidas++;
+        continue; // Ya existe, se saltea sin error
+      }
+
       // Check if name already exists
-      const nombreExistente = await db.queryRaw(`SELECT MarcaID FROM Marca WHERE Descripcion = '${mardsc}'`);
+      const nombreExistente = await db.queryRaw(`SELECT MarcaID FROM Marca WHERE Descripcion = '${mardsc.replace(/'/g, "''")}'`);
       if (nombreExistente.length > 0) {
         omitidas++;
         errores.push(`Fila ${i + 2}: El nombre de marca '${mardsc}' ya existe.`);
         continue;
       }
       
-      const marcaData = {
-        CodigoMarca: marcod,
-        Descripcion: mardsc,
-        Origen: origen
-      };
-
-      await db.insert('Marca', marcaData);
+      // Marca.MarcaID no tiene IDENTITY: se inserta el ID explícito directo, sin IDENTITY_INSERT.
+      await db.queryRaw(
+        `INSERT INTO Marca (MarcaID, CodigoMarca, Descripcion, Origen) VALUES (${marcaIdInt}, '${marcod}', N'${mardsc.replace(/'/g, "''")}', N'${(origen || '').replace(/'/g, "''")}')`
+      );
       procesadas++;
     }
 

@@ -20,6 +20,7 @@ import {
   Download,
 } from 'lucide-react';
 import { useAuth } from '@context/AuthContext';
+import { useTheme } from '@context/ThemeContext';
 import { UserRole } from '@/types/index';
 import { cn } from '@utils/cn';
 
@@ -43,19 +44,15 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const darkMode = theme === 'dark';
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
   };
 
   const canAccessRoute = (roles: string[]) => {
@@ -134,7 +131,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             <div className="space-y-1">
               <button
-                onClick={toggleDarkMode}
+                onClick={toggleTheme}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
               >
                 {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

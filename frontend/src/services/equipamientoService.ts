@@ -4,7 +4,12 @@ import { EquipamientoModelo } from '@/types/index';
 export const equipamientoService = {
   getByModeloId: async (idModelo: number): Promise<EquipamientoModelo | null> => {
     const response = await apiClient.get(`/equipamiento/modelo/${idModelo}`);
-    return response.data?.data || response.data;
+    const data = response.data?.data || response.data;
+    // Adjuntamos el esquema (columna+tipo) para que el form auto-genere los campos no curados.
+    if (data && response.data?.schema) {
+      (data as any).__schema = response.data.schema;
+    }
+    return data;
   },
 
   create: async (data: Partial<EquipamientoModelo>): Promise<EquipamientoModelo> => {

@@ -196,7 +196,7 @@ export default function EmpadronamientosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Carga de Empadronamientos</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             Registre los empadronamientos mensuales por departamento
           </p>
         </div>
@@ -212,7 +212,7 @@ export default function EmpadronamientosPage() {
               type="month"
               value={periodo}
               onChange={e => setPeriodo(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
             />
           </div>
 
@@ -222,7 +222,7 @@ export default function EmpadronamientosPage() {
             <select
               value={departamentoSeleccionado || ''}
               onChange={e => setDepartamentoSeleccionado(e.target.value ? Number(e.target.value) : null)}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
             >
               <option value="">Seleccione...</option>
               {departamentos.map(depto => (
@@ -239,7 +239,7 @@ export default function EmpadronamientosPage() {
             <select
               value={marcaSeleccionada || ''}
               onChange={e => setMarcaSeleccionada(e.target.value ? Number(e.target.value) : null)}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
             >
               <option value="">Seleccione...</option>
               {marcas.map(marca => (
@@ -257,7 +257,7 @@ export default function EmpadronamientosPage() {
               value={familiaSeleccionada || ''}
               onChange={e => setFamiliaSeleccionada(e.target.value ? Number(e.target.value) : null)}
               disabled={!marcaSeleccionada || familias.length === 0}
-              className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+              className="w-full px-3 py-2 border rounded-md bg-background text-foreground disabled:bg-muted"
             >
               <option value="">Seleccione...</option>
               {familias.map(familia => (
@@ -288,46 +288,46 @@ export default function EmpadronamientosPage() {
             <h2 className="text-xl font-semibold">
               {departamentoNombre} - {marcaNombre} - {familias.find(f => f.FamiliaID === familiaSeleccionada)?.Nombre || ''}
             </h2>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {empadronamientos.length} modelos encontrados
             </span>
           </div>
 
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Cargando...</div>
+            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
           ) : empadronamientos.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               No hay modelos disponibles para esta combinación
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Modelo
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
                       Mes Anterior
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
                       Cantidad
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Precio Actual
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
+                      Precio
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
                       Fecha
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {empadronamientos.map(empadronamiento => (
-                    <tr key={empadronamiento.ModeloID} className="hover:bg-gray-50">
+                    <tr key={empadronamiento.ModeloID} className="hover:bg-muted/50">
                       <td className="px-4 py-3 text-sm">
                         {empadronamiento.DescripcionModelo}
                       </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-500">
+                      <td className="px-4 py-3 text-center text-sm text-muted-foreground">
                         {datosAnteriores[empadronamiento.ModeloID] || 0}
                       </td>
                       <td className="px-4 py-3">
@@ -336,14 +336,24 @@ export default function EmpadronamientosPage() {
                           min="0"
                           value={empadronamiento.Cantidad || ''}
                           onChange={e => handleCantidadChange(empadronamiento.ModeloID, e.target.value)}
-                          className="w-24 px-3 py-1 text-center border rounded-md focus:ring-2 focus:ring-blue-500"
+                          className="w-24 px-3 py-1 text-center border rounded-md bg-background text-foreground focus:ring-2 focus:ring-blue-500"
                           placeholder="0"
                         />
                       </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-900">
-                        {empadronamiento.PrecioActual ? `$ ${empadronamiento.PrecioActual.toLocaleString()}` : '-'}
+                      <td className="px-4 py-3 text-center text-sm text-foreground">
+                        {empadronamiento.EmpadronamientoID && empadronamiento.PrecioGuardado != null ? (
+                          <span title="Precio congelado al momento de cargar este empadronamiento">
+                            $ {empadronamiento.PrecioGuardado.toLocaleString()}
+                          </span>
+                        ) : empadronamiento.PrecioActual ? (
+                          <span className="text-muted-foreground" title="Precio actual: se congelará con este valor al guardar">
+                            $ {empadronamiento.PrecioActual.toLocaleString()} <span className="text-xs">(a guardar)</span>
+                          </span>
+                        ) : (
+                          '-'
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-500">
+                      <td className="px-4 py-3 text-center text-sm text-muted-foreground">
                         {empadronamiento.FechaPrecio ? new Date(empadronamiento.FechaPrecio).toLocaleDateString() : '-'}
                       </td>
                     </tr>
@@ -357,8 +367,8 @@ export default function EmpadronamientosPage() {
 
       {/* Mensaje de ayuda */}
       {(!marcaSeleccionada || !departamentoSeleccionado || !familiaSeleccionada) && (
-        <Card className="p-6 bg-blue-50 border-blue-200">
-          <p className="text-blue-800">
+        <Card className="p-6 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50">
+          <p className="text-blue-800 dark:text-blue-300">
             👆 Seleccione periodo, departamento, marca y familia para comenzar a cargar empadronamientos
           </p>
         </Card>

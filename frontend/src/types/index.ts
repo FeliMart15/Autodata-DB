@@ -53,6 +53,8 @@ export interface Modelo {
   ModeloID: number;
   MarcaID: number;
   CodigoModelo?: string;
+  CodigoMarca?: string;
+  CodigoAutodata?: string;
   DescripcionModelo?: string;
   Modelo?: string; // Alias for DescripcionModelo
   Modelo1?: string;
@@ -241,10 +243,10 @@ export interface EquipamientoModelo {
   KitHiFi?: string;
   Radio?: boolean;
   NumeroAsientos?: number;
-  AsientoElectricoCalefMasaje?: boolean;
+  AsientoElectricoCalefMasaje?: string;
   AsientosRango2y3?: string;
   Asiento2Mas1?: boolean;
-  ButacaElectrica?: boolean;
+  ButacaElectrica?: string;
   AsientoVentilado?: boolean;
   AsientosMasajeador?: number;
   ApoyabrazosDelantero?: boolean;

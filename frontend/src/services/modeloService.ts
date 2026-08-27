@@ -59,6 +59,11 @@ export const modeloService = {
     await apiClient.delete(`/modelos/${id}`);
   },
 
+  deletePermanente: async (id: number): Promise<{ message: string; deletedId: number }> => {
+    const response = await apiClient.delete<ApiResponse<{ message: string; deletedId: number }>>(`/modelos/${id}/permanente`);
+    return response.data as unknown as { message: string; deletedId: number };
+  },
+
   cambiarEstado: async (id: number, data: CambiarEstadoRequest): Promise<Modelo> => {
     const response = await apiClient.post<ApiResponse<Modelo>>(`/modelos/${id}/estado`, data);
     return response.data.data;

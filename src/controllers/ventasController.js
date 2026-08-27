@@ -30,6 +30,7 @@ const obtenerVentasPorFamilia = async (req, res) => {
                 v.VentaID,
                 v.Periodo,
                 v.FechaModificacion,
+                v.PrecioUnitario AS PrecioGuardado,
                 COALESCE((SELECT TOP 1 Precio FROM PrecioModelo pm WHERE pm.ModeloID = m.ModeloID ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC), m.Precio0KMInicial, m.PrecioInicial, 0) AS PrecioActual,
                 (SELECT TOP 1 FechaVigenciaDesde FROM PrecioModelo pm WHERE pm.ModeloID = m.ModeloID ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC) AS FechaPrecio
             FROM Modelo m
@@ -168,18 +169,28 @@ const crearVentasBatch = async (req, res) => {
         let affectedRows = 0;
         
         for (const venta of ventasFiltradas) {
+            // PrecioUnitario se congela SOLO al crear el registro (WHEN NOT MATCHED).
+            // Si la venta ya existía para ese modelo+periodo, el UPDATE no toca el precio:
+            // queda con el valor que tenía el auto cuando se cargó por primera vez.
             const query = `
                 MERGE Venta AS target
                 USING (SELECT @modeloId AS ModeloID, @periodo AS Periodo) AS source
                 ON target.ModeloID = source.ModeloID AND target.Periodo = source.Periodo
                 WHEN MATCHED THEN
-                    UPDATE SET 
+                    UPDATE SET
                         Cantidad = @cantidad,
                         ModificadoPorID = @usuarioId,
                         FechaModificacion = GETDATE()
                 WHEN NOT MATCHED THEN
-                    INSERT (ModeloID, Cantidad, Periodo, Anio, Mes, CreadoPorID, FechaCreacion)
-                    VALUES (@modeloId, @cantidad, @periodo, @anio, @mes, @usuarioId, GETDATE());
+                    INSERT (ModeloID, Cantidad, Periodo, Anio, Mes, PrecioUnitario, CreadoPorID, FechaCreacion)
+                    VALUES (
+                        @modeloId, @cantidad, @periodo, @anio, @mes,
+                        (SELECT COALESCE(
+                            (SELECT TOP 1 Precio FROM PrecioModelo pm WHERE pm.ModeloID = @modeloId ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC),
+                            m.Precio0KMInicial, m.PrecioInicial, 0)
+                         FROM Modelo m WHERE m.ModeloID = @modeloId),
+                        @usuarioId, GETDATE()
+                    );
             `;
             
             await db.query(query, {

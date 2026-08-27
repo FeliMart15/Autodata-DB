@@ -10,7 +10,6 @@ import { FormularioCargaModelo } from '@components/modelos/FormularioCargaModelo
 import { FormularioDatosMinimos } from '@components/modelos/FormularioDatosMinimos';
 import { ModeloDetailView } from '@components/modelos/ModeloDetailView';
 import { EquipamientoView } from '@components/equipamiento/EquipamientoView';
-import { EquipamientoForm } from '@components/equipamiento/EquipamientoForm';
 import { PreciosView } from '@components/precios/PreciosView';
 import { HistorialSection } from '@components/historial/HistorialSection';
 import { VentasHistorial } from '@components/ventas/VentasHistorial';
@@ -247,7 +246,7 @@ export function ModeloDetailPage() {
                   {modelo.MarcaNombre || 'Sin marca'} {modelo.DescripcionModelo || modelo.Modelo || modelo.modelo}
                 </h1>
                 {modelo.codigo_autodata && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-mono font-medium bg-purple-100 text-purple-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-mono font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                     {modelo.codigo_autodata}
                   </span>
                 )}

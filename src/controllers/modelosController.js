@@ -1,5 +1,6 @@
 const db = require('../config/db-simple');
 const logger = require('../config/logger');
+const { asegurarEquipamientoVacio } = require('../utils/modeloHelper');
 const { generarCodigoAutodata, obtenerProximoCodigoModelo, formatToCodigo4 } = require('../utils/codigoAutodata');
 const {
   ESTADOS,
@@ -13,34 +14,37 @@ const {
 // GET /api/modelos - Listar modelos con filtros y paginación
 exports.getAll = async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 50, 
-      estado, 
-      marcaId, 
+    const {
+      page = 1,
+      limit = 50,
+      estado,
+      marcaId,
       anio,
       tipo,
-      search 
+      combustible,
+      search
     } = req.query;
-    
+
     const offset = (page - 1) * limit;
-    
+
     // Construir WHERE clause
     let whereConditions = ['m.Activo = 1'];
     if (estado) {
       if (Array.isArray(estado)) {
-        const estadoList = estado.map(e => `N'${e}'`).join(', ');
+        const estadoList = estado.map(e => `N'${e.replace(/'/g, "''")}'`).join(', ');
         whereConditions.push(`m.Estado IN (${estadoList})`);
       } else {
-        const estadosStr = estado.split(',').map(e => `N'${e.trim()}'`).join(', ');
+        const estadosStr = estado.split(',').map(e => `N'${e.trim().replace(/'/g, "''")}'`).join(', ');
         whereConditions.push(`m.Estado IN (${estadosStr})`);
       }
     }
-    if (marcaId) whereConditions.push(`m.MarcaID = ${marcaId}`);
-    if (anio) whereConditions.push(`m.Anio = ${anio}`);
-    if (tipo) whereConditions.push(`m.Tipo = N'${tipo}'`);
+    if (marcaId) whereConditions.push(`m.MarcaID = ${parseInt(marcaId, 10)}`);
+    if (anio) whereConditions.push(`m.Anio = ${parseInt(anio, 10)}`);
+    if (tipo) whereConditions.push(`m.Tipo = N'${String(tipo).replace(/'/g, "''")}'`);
+    if (combustible) whereConditions.push(`m.CombustibleCodigo = N'${String(combustible).replace(/'/g, "''")}'`);
     if (search) {
-      whereConditions.push(`(m.DescripcionModelo LIKE N'%${search}%' OR m.Familia LIKE N'%${search}%' OR mar.Descripcion LIKE N'%${search}%')`);
+      const searchSafe = String(search).replace(/'/g, "''");
+      whereConditions.push(`(m.DescripcionModelo LIKE N'%${searchSafe}%' OR m.Familia LIKE N'%${searchSafe}%' OR mar.Descripcion LIKE N'%${searchSafe}%' OR m.CodigoModelo LIKE N'%${searchSafe}%' OR mar.CodigoMarca LIKE N'%${searchSafe}%' OR m.CodigoAutodata LIKE N'%${searchSafe}%')`);
     }
     
     const whereClause = whereConditions.join(' AND ');
@@ -285,7 +289,8 @@ exports.create = async (req, res) => {
     if (hp) { campos.push('HP'); valores.push(hp); }
     if (traccion) { campos.push('Traccion'); valores.push(`N'${traccion.replace(/'/g, "''")}'`); }
     if (caja) { campos.push('Caja'); valores.push(`N'${caja.replace(/'/g, "''")}'`); }
-    if (tipo_caja) { campos.push('TipoCaja'); valores.push(`N'${tipo_caja.replace(/'/g, "''")}'`); }
+    // Caja canónica unificada: usar TipoCajaAut (mismo campo que Datos Mínimos), no TipoCaja
+    if (tipo_caja) { campos.push('TipoCajaAut'); valores.push(`N'${tipo_caja.replace(/'/g, "''")}'`); }
     if (turbo !== undefined) { campos.push('Turbo'); valores.push(turbo ? '1' : '0'); }
     if (puertas) { campos.push('Puertas'); valores.push(puertas); }
     if (pasajeros) { campos.push('Pasajeros'); valores.push(pasajeros); }
@@ -328,6 +333,9 @@ exports.create = async (req, res) => {
         `;
         await db.queryRaw(precioQuery);
       }
+
+      // Unificación: todo modelo arranca con su fila 1:1 de equipamiento (vacía)
+      await asegurarEquipamientoVacio(modeloId);
     }
     
     // Obtener el modelo creado
@@ -415,7 +423,7 @@ exports.update = async (req, res) => {
       'turbo': 'Turbo',
       'traccion': 'Traccion',
       'caja': 'Caja',
-      'tipo_caja': 'TipoCaja',
+      'tipo_caja': 'TipoCajaAut',
       'puertas': 'Puertas',
       'pasajeros': 'Pasajeros',
       'estado': 'Estado',
@@ -458,16 +466,39 @@ exports.update = async (req, res) => {
       }
     }
     
+    // Auto-resolver FamiliaID: si el modelo tiene Familia texto pero FamiliaID null, sincronizarlo ahora
+    // Esto cubre el caso de modelos importados via importarExcelAutos que no resolvían FamiliaID
+    const modeloActual = modeloExistente[0];
+    const nuevaFamilia = datosActualizacion.Familia || datosActualizacion.familia;
+    const familiaYaEnPayload = nuevaFamilia !== undefined;
+    if (!familiaYaEnPayload && modeloActual.FamiliaID == null && modeloActual.Familia) {
+      const nombreFamilia = String(modeloActual.Familia).trim();
+      const marcaIdTarget = modeloActual.MarcaID;
+      try {
+        const checkFam = await db.queryRaw(`SELECT FamiliaID FROM Familia WHERE MarcaID = ${marcaIdTarget} AND LTRIM(RTRIM(Nombre)) COLLATE Latin1_General_CI_AI = LTRIM(RTRIM(N'${nombreFamilia.replace(/'/g, "''")}')) COLLATE Latin1_General_CI_AI`);
+        if (checkFam && checkFam.length > 0) {
+          setClauses.push(`FamiliaID = ${checkFam[0].FamiliaID}`);
+        } else {
+          const insertFam = await db.queryRaw(`INSERT INTO Familia (MarcaID, Nombre, Activo, FechaCreacion) OUTPUT INSERTED.FamiliaID VALUES (${marcaIdTarget}, N'${nombreFamilia.replace(/'/g, "''")}', 1, GETDATE())`);
+          if (insertFam && insertFam.length > 0) {
+            setClauses.push(`FamiliaID = ${insertFam[0].FamiliaID}`);
+          }
+        }
+      } catch(e) {
+        logger.error('Error auto-resolviendo FamiliaID en update:', e);
+      }
+    }
+
     if (setClauses.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'No hay datos para actualizar'
       });
     }
-    
+
     // Ejecutar actualización
     const updateQuery = `
-      UPDATE Modelo 
+      UPDATE Modelo
       SET ${setClauses.join(', ')}
       WHERE ModeloID = ${id}
     `;
@@ -542,6 +573,53 @@ exports.delete = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error al eliminar modelo',
+      error: error.message
+    });
+  }
+};
+
+// DELETE /api/modelos/:id/permanente - Eliminar modelo definitivamente (solo admin)
+exports.deletePermanente = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const idNum = parseInt(id, 10);
+
+    if (!idNum || isNaN(idNum)) {
+      return res.status(400).json({ success: false, message: 'ID inválido' });
+    }
+
+    // Verificar que el modelo existe
+    const modelo = await db.queryRaw(`SELECT ModeloID, DescripcionModelo FROM Modelo WHERE ModeloID = ${idNum}`);
+    if (modelo.length === 0) {
+      return res.status(404).json({ success: false, message: 'Modelo no encontrado' });
+    }
+
+    const descripcion = modelo[0].DescripcionModelo || `ID ${idNum}`;
+
+    // Borrar en cascada respetando FK (hijos antes que padres)
+    await db.queryRaw(`DELETE FROM EquipamientoModelo WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM PrecioModelo WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM ModeloHistorial WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM ModeloEstado WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM VentasModelo WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM Empadronamiento WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM Venta WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM PrecioVersion WHERE VersionID IN (SELECT VersionID FROM VersionModelo WHERE ModeloID = ${idNum})`);
+    await db.queryRaw(`DELETE FROM VersionModelo WHERE ModeloID = ${idNum}`);
+    await db.queryRaw(`DELETE FROM Modelo WHERE ModeloID = ${idNum}`);
+
+    logger.info(`Modelo eliminado PERMANENTEMENTE: ID ${idNum} - "${descripcion}" por usuario ${req.user.username}`);
+
+    res.json({
+      success: true,
+      message: `Modelo "${descripcion}" eliminado permanentemente`,
+      deletedId: idNum
+    });
+  } catch (error) {
+    logger.error('Error al eliminar modelo permanentemente:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar modelo permanentemente',
       error: error.message
     });
   }

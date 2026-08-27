@@ -1,0 +1,17 @@
+EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT all';
+DELETE FROM AuditoriaAcceso;
+DELETE FROM VentasModelo;
+DELETE FROM Venta;
+DELETE FROM Empadronamiento;
+DELETE FROM EquipamientoModelo;
+DELETE FROM ModeloHistorial;
+DELETE FROM PrecioVersion;
+DELETE FROM VersionEstado;
+DELETE FROM VersionModelo;
+DELETE FROM PrecioModelo;
+DELETE FROM ModeloEstado;
+DELETE FROM Modelo;
+DELETE FROM Familia;
+DELETE FROM Marca;
+DELETE FROM RefreshToken;
+EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all';

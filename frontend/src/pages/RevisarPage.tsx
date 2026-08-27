@@ -182,7 +182,7 @@ export function RevisarPage() {
             <CardTitle>Modelos en Revisión</CardTitle>
             <div className="mt-4 space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Buscar modelo..."
@@ -192,9 +192,9 @@ export function RevisarPage() {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-500" />
+                <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={estadoFilter} onValueChange={setEstadoFilter}>
-                  <SelectTrigger className="w-full bg-white">
+                  <SelectTrigger className="w-full bg-background">
                     <SelectValue placeholder="Filtrar por tipo de revisión" />
                   </SelectTrigger>
                   <SelectContent>
@@ -209,18 +209,18 @@ export function RevisarPage() {
           <CardContent>
             <div className="space-y-2 max-h-[600px] overflow-y-auto">
               {modelosFiltrados.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No hay modelos para revisar</p>
+                <p className="text-muted-foreground text-center py-4">No hay modelos para revisar</p>
               ) : (
                 modelosFiltrados.map((modelo) => (
                   <div
                     key={modelo.ModeloID}
                     onClick={() => handleSeleccionarModelo(modelo)}
-                    className={`p-3 border rounded cursor-pointer hover:bg-gray-50 transition ${
-                      modeloSeleccionado?.ModeloID === modelo.ModeloID ? 'border-blue-500 bg-blue-50' : ''
+                    className={`p-3 border rounded cursor-pointer hover:bg-muted/50 transition ${
+                      modeloSeleccionado?.ModeloID === modelo.ModeloID ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
                     }`}
                   >
                     <div className="font-medium">{modelo.MarcaNombre} {modelo.DescripcionModelo}</div>
-                    <div className="text-sm text-gray-500">{modelo.codigo_autodata}</div>
+                    <div className="text-sm text-muted-foreground">{modelo.codigo_autodata}</div>
                     <div className="mt-1">
                       <span className={`inline-block px-2 py-1 text-xs rounded ${
                         estadoService.getEstadoBadgeColor(modelo.Estado)
@@ -246,8 +246,8 @@ export function RevisarPage() {
           </CardHeader>
           <CardContent>
             {!modeloSeleccionado ? (
-              <div className="text-center py-12 text-gray-500">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <div className="text-center py-12 text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p>Selecciona un modelo de la lista para comenzar la revisión</p>
               </div>
             ) : (
@@ -328,7 +328,7 @@ export function RevisarPage() {
 
                   <TabsContent value="equipamiento">
                     <div className="space-y-4 mt-4">
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                           Revisión de equipamiento ({equipamiento ? Object.keys(equipamiento).length - 3 : 0} campos)
                         </p>
                         {equipamiento && (

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
+﻿import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import { Badge } from '@components/ui/Badge';
 import { Modelo } from '@/types/index';
 
@@ -32,7 +32,7 @@ export function ModeloDetailView({ modelo }: ModeloDetailViewProps) {
             <InfoRow label="Familia" value={modelo.Familia} />
             <InfoRow label="Modelo" value={modelo.Modelo || modelo.DescripcionModelo} />
             <InfoRow label="Combustible" value={modelo.CombustibleCodigo} />
-            <InfoRow label="Categoría de Vehículo" value={modelo.CategoriaVehiculo || modelo.categoria || modelo.CategoriaCodigo || modelo.categoria} />
+            <InfoRow label="Categoría de Vehículo" value={modelo.Tipo} />
           </dl>
         </CardContent>
       </Card>
@@ -75,7 +75,7 @@ export function ModeloDetailView({ modelo }: ModeloDetailViewProps) {
         </CardHeader>
         <CardContent>
           <dl className="divide-y">
-            <InfoRow label="Tipo de Caja Automática" value={modelo.TipoCajaAut} />
+            <InfoRow label="Tipo de Caja" value={modelo.TipoCajaAut} />
             <InfoRow label="Puertas" value={modelo.Puertas} />
             <InfoRow label="Asientos" value={modelo.Asientos} />
             <InfoRow label="Importador" value={modelo.Importador} />

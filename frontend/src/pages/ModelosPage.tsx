@@ -8,13 +8,28 @@ import { Input } from '@components/ui/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/Select';
 import { modeloService } from '@services/modeloService';
 import { marcasService } from '@/services/marcasService';
-import { Modelo, ModeloEstado, ModeloFilters } from '@/types/index';
+import estadoService from '@services/estadoService';
+import { Modelo, ModeloEstado, ModeloFilters, UserRole } from '@/types/index';
 import { Marca as MarcaResponse } from '@/types/marca';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, Filter, Trash2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useDebounce } from '@hooks/useDebounce';
+import { useAuth } from '@context/AuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@components/ui/alert-dialog';
+
+// Combustibles reconocidos por el sistema (mismo listado que Datos Mínimos)
+const COMBUSTIBLES = ['NAFTA', 'DIESEL', 'ELÉCTRICO', 'HÍBRIDO', 'GNC'];
 
 export function ModelosPage() {
   const [modelos, setModelos] = useState<Modelo[]>([]);
@@ -22,8 +37,12 @@ export function ModelosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<ModeloFilters>({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [deletingModelo, setDeletingModelo] = useState<Modelo | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const debouncedSearch = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.rol === UserRole.ADMIN;
 
   useEffect(() => {
     loadMarcas();
@@ -76,6 +95,21 @@ export function ModelosPage() {
     setSearchTerm('');
   };
 
+  const handleDeletePermanente = async () => {
+    if (!deletingModelo) return;
+    setIsDeleting(true);
+    try {
+      await modeloService.deletePermanente(deletingModelo.ModeloID);
+      setModelos((prev) => prev.filter((m) => m.ModeloID !== deletingModelo.ModeloID));
+      setDeletingModelo(null);
+    } catch (error: any) {
+      console.error('Error al eliminar:', error);
+      alert(error.response?.data?.message || 'Error al eliminar el modelo');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const columns: ColumnDef<Modelo>[] = [
     {
       accessorKey: 'MarcaNombre',
@@ -99,17 +133,17 @@ export function ModelosPage() {
       ),
     },
     {
-      accessorKey: 'Anio',
-      header: 'Año',
+      accessorKey: 'CodigoMarca',
+      header: 'Cód. Marca',
       cell: ({ row }) => (
-        <span>{row.original.Anio || '-'}</span>
+        <span className="font-mono text-xs">{row.original.CodigoMarca || '-'}</span>
       ),
     },
     {
-      accessorKey: 'Combustible',
-      header: 'Combustible',
+      accessorKey: 'CodigoModelo',
+      header: 'Cód. Modelo',
       cell: ({ row }) => (
-        <span>{row.original.CombustibleCodigo || '-'}</span>
+        <span className="font-mono text-xs">{row.original.CodigoModelo || '-'}</span>
       ),
     },
     {
@@ -125,26 +159,10 @@ export function ModelosPage() {
       cell: ({ row }) => {
         const estado = row.original.Estado;
         if (!estado) return <span className="text-muted-foreground text-sm">-</span>;
-        
-        const colors: Record<string, string> = {
-          'importado': 'bg-gray-100 text-gray-800',
-          'requisitos_minimos': 'bg-blue-100 text-blue-800',
-          'en_revision': 'bg-yellow-100 text-yellow-800',
-          'para_corregir': 'bg-red-100 text-red-800',
-          'definitivo': 'bg-green-100 text-green-800',
-        };
-        
-        const labels: Record<string, string> = {
-          'importado': 'Importado',
-          'requisitos_minimos': 'Requisitos Mínimos',
-          'en_revision': 'En Revisión',
-          'para_corregir': 'Para Corregir',
-          'definitivo': 'Definitivo',
-        };
-        
+
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[estado] || 'bg-gray-100 text-gray-800'}`}>
-            {labels[estado] || estado}
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${estadoService.getEstadoBadgeColor(estado)}`}>
+            {estadoService.getEstadoLabel(estado)}
           </span>
         );
       },
@@ -158,6 +176,23 @@ export function ModelosPage() {
         </span>
       ),
     },
+    ...(isAdmin ? [{
+      id: 'acciones',
+      header: '',
+      cell: ({ row }: { row: { original: Modelo } }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDeletingModelo(row.original);
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ),
+    }] : []),
   ];
 
   if (isLoading && modelos.length === 0) {
@@ -212,27 +247,38 @@ export function ModelosPage() {
           </Select>
 
           <Select
-            value={filters.estado || ''}
-            onValueChange={(value) => handleFilterChange('estado', value as ModeloEstado)}
+            value={filters.estado || 'all'}
+            onValueChange={(value) => handleFilterChange('estado', value === 'all' ? undefined : (value as ModeloEstado))}
           >
             <SelectTrigger label="Estado">
               <SelectValue placeholder="Todos los estados" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
               {Object.values(ModeloEstado).map((estado) => (
                 <SelectItem key={estado} value={estado}>
-                  {estado.replace(/_/g, ' ')}
+                  {estadoService.getEstadoLabel(estado)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Input
-            type="number"
-            placeholder="Año"
-            value={filters.anio || ''}
-            onChange={(e) => handleFilterChange('anio', e.target.value ? Number(e.target.value) : undefined)}
-          />
+          <Select
+            value={filters.combustible || 'all'}
+            onValueChange={(value) => handleFilterChange('combustible', value === 'all' ? undefined : value)}
+          >
+            <SelectTrigger label="Combustible">
+              <SelectValue placeholder="Todos los combustibles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los combustibles</SelectItem>
+              {COMBUSTIBLES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <Button variant="outline" onClick={clearFilters} className="w-full">
             Limpiar Filtros
@@ -254,6 +300,31 @@ export function ModelosPage() {
           onRowClick={(row) => navigate(`/modelos/${row.ModeloID}`)}
         />
       </div>
+
+      {/* Diálogo confirmación eliminar permanente (solo admin) */}
+      <AlertDialog open={!!deletingModelo} onOpenChange={(open) => !open && setDeletingModelo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar modelo definitivamente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a eliminar permanentemente el modelo{' '}
+              <strong>{deletingModelo?.Modelo || deletingModelo?.DescripcionModelo || `ID ${deletingModelo?.ModeloID}`}</strong>.
+              <br /><br />
+              Esta acción <strong>no se puede deshacer</strong>. Se borrarán también todos sus datos de equipamiento, precios e historial.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePermanente}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? 'Eliminando...' : 'Eliminar definitivamente'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -31,6 +31,7 @@ const obtenerEmpadronamientosPorFamilia = async (req, res) => {
                 e.Periodo,
                 e.DepartamentoID,
                 e.FechaModificacion,
+                e.PrecioUnitario AS PrecioGuardado,
                 COALESCE((SELECT TOP 1 Precio FROM PrecioModelo pm WHERE pm.ModeloID = m.ModeloID ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC), m.Precio0KMInicial, m.PrecioInicial, 0) AS PrecioActual,
                 (SELECT TOP 1 FechaVigenciaDesde FROM PrecioModelo pm WHERE pm.ModeloID = m.ModeloID ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC) AS FechaPrecio
             FROM Modelo m
@@ -175,20 +176,30 @@ const crearEmpadronamientosBatch = async (req, res) => {
         let affectedRows = 0;
         
         for (const empadronamiento of empadronamientosFiltrados) {
+            // PrecioUnitario se congela SOLO al crear el registro (WHEN NOT MATCHED).
+            // Si el empadronamiento ya existía para ese modelo+depto+periodo, el UPDATE
+            // no toca el precio: queda con el valor que tenía el auto al cargarlo la primera vez.
             const query = `
                 MERGE Empadronamiento AS target
                 USING (SELECT @modeloId AS ModeloID, @departamentoId AS DepartamentoID, @periodo AS Periodo) AS source
-                ON target.ModeloID = source.ModeloID 
-                    AND target.DepartamentoID = source.DepartamentoID 
+                ON target.ModeloID = source.ModeloID
+                    AND target.DepartamentoID = source.DepartamentoID
                     AND target.Periodo = source.Periodo
                 WHEN MATCHED THEN
-                    UPDATE SET 
+                    UPDATE SET
                         Cantidad = @cantidad,
                         ModificadoPorID = @usuarioId,
                         FechaModificacion = GETDATE()
                 WHEN NOT MATCHED THEN
-                    INSERT (ModeloID, DepartamentoID, Cantidad, Periodo, Anio, Mes, CreadoPorID, FechaCreacion)
-                    VALUES (@modeloId, @departamentoId, @cantidad, @periodo, @anio, @mes, @usuarioId, GETDATE());
+                    INSERT (ModeloID, DepartamentoID, Cantidad, Periodo, Anio, Mes, PrecioUnitario, CreadoPorID, FechaCreacion)
+                    VALUES (
+                        @modeloId, @departamentoId, @cantidad, @periodo, @anio, @mes,
+                        (SELECT COALESCE(
+                            (SELECT TOP 1 Precio FROM PrecioModelo pm WHERE pm.ModeloID = @modeloId ORDER BY pm.FechaVigenciaDesde DESC, pm.PrecioID DESC),
+                            m.Precio0KMInicial, m.PrecioInicial, 0)
+                         FROM Modelo m WHERE m.ModeloID = @modeloId),
+                        @usuarioId, GETDATE()
+                    );
             `;
             
             await db.query(query, {

@@ -254,7 +254,7 @@ const handleEnviarARevision = async (formData: any) => {
           <CardContent>
             <div className="mb-4 space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar modelo o marca..."
                   value={searchTerm}
@@ -263,9 +263,9 @@ const handleEnviarARevision = async (formData: any) => {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-500" />
+                <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={estadoFilter} onValueChange={setEstadoFilter}>
-                  <SelectTrigger className="w-full bg-white">
+                  <SelectTrigger className="w-full bg-background">
                     <SelectValue placeholder="Filtrar por estado" />
                   </SelectTrigger>
                   <SelectContent>
@@ -291,9 +291,9 @@ const handleEnviarARevision = async (formData: any) => {
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <p className="font-semibold">{modelo.MarcaNombre}</p>
-                      <p className="text-sm text-gray-600">{modelo.DescripcionModelo}</p>
+                      <p className="text-sm text-muted-foreground">{modelo.DescripcionModelo}</p>
                       {modelo.codigo_autodata && (
-                        <p className="text-xs text-gray-500 mt-1">{modelo.codigo_autodata}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{modelo.codigo_autodata}</p>
                       )}
                     </div>
                     <Badge color={estadoService.getEstadoBadgeColor(modelo.Estado)}>
@@ -301,7 +301,7 @@ const handleEnviarARevision = async (formData: any) => {
                     </Badge>
                   </div>
                   {modelo.ObservacionesRevision && (
-                    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800/50 rounded text-xs">
                       <strong>Observaciones:</strong> {modelo.ObservacionesRevision}
                     </div>
                   )}
@@ -309,7 +309,7 @@ const handleEnviarARevision = async (formData: any) => {
               ))}
 
               {modelosFiltrados.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <p>No hay modelos pendientes</p>
                 </div>
               )}
@@ -328,8 +328,8 @@ const handleEnviarARevision = async (formData: any) => {
           </CardHeader>
           <CardContent>
             {!modeloSeleccionado ? (
-              <div className="text-center py-12 text-gray-500">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <div className="text-center py-12 text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p>Selecciona un modelo de la lista para comenzar a cargar datos</p>
               </div>
             ) : (
@@ -362,7 +362,7 @@ const handleEnviarARevision = async (formData: any) => {
 
         <TabsContent value="minimos">
           {modeloSeleccionado.Estado === ModeloEstado.CORREGIR_MINIMOS && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-800">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800/50 rounded-md text-red-800 dark:text-red-300">
               <h4 className="font-semibold flex items-center gap-2"><AlertCircle className="w-5 h-5"/> Correcciones solicitadas (Mínimos)</h4>
               <p className="mt-1">{(modeloSeleccionado as any).ObservacionesRevision || "Revisa los datos mínimos, se han solicitado correcciones."}</p>
             </div>
@@ -378,7 +378,7 @@ const handleEnviarARevision = async (formData: any) => {
 
         <TabsContent value="equipamiento">
           {modeloSeleccionado.Estado === ModeloEstado.CORREGIR_EQUIPAMIENTO && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-800">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800/50 rounded-md text-red-800 dark:text-red-300">
               <h4 className="font-semibold flex items-center gap-2"><AlertCircle className="w-5 h-5"/> Correcciones solicitadas (Equipamiento)</h4>
               <p className="mt-1">{(modeloSeleccionado as any).ObservacionesRevision || "Revisa el equipamiento, se han solicitado correcciones."}</p>
             </div>
@@ -390,6 +390,7 @@ const handleEnviarARevision = async (formData: any) => {
             onCancel={() => setModeloSeleccionado(null)}
             readonly={!isFaseEquipamiento}
             onSendRevision={isFaseEquipamiento ? handleEnviarARevision : undefined}
+            modeloHP={modeloSeleccionado?.HP}
           />
         </TabsContent>
       </>

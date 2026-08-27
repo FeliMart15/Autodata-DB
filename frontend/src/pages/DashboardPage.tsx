@@ -184,29 +184,29 @@ export function DashboardPage() {
             <CardTitle>Estado del Workflow</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50">
               <span className="text-sm font-medium">Datos Mínimos</span>
-              <span className="text-2xl font-bold text-blue-600">{stats?.requisitos_minimos || 0}</span>
+              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats?.requisitos_minimos || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800/50">
               <span className="text-sm font-medium">Equipamiento Cargado</span>
-              <span className="text-2xl font-bold text-yellow-600">{stats?.equipamiento_cargado || 0}</span>
+              <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats?.equipamiento_cargado || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-orange-50 border border-orange-200">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-orange-50 border border-orange-200 dark:bg-orange-900/20 dark:border-orange-800/50">
               <span className="text-sm font-medium">En Revisión</span>
-              <span className="text-2xl font-bold text-orange-600">{stats?.en_revision || 0}</span>
+              <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats?.en_revision || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 border border-purple-200">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 border border-purple-200 dark:bg-purple-900/20 dark:border-purple-800/50">
               <span className="text-sm font-medium">En Aprobación</span>
-              <span className="text-2xl font-bold text-purple-600">{stats?.en_aprobacion || 0}</span>
+              <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats?.en_aprobacion || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800/50">
               <span className="text-sm font-medium">Para Corregir</span>
-              <span className="text-2xl font-bold text-red-600">{stats?.para_corregir || 0}</span>
+              <span className="text-2xl font-bold text-red-600 dark:text-red-400">{stats?.para_corregir || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800/50">
               <span className="text-sm font-medium">Definitivos</span>
-              <span className="text-2xl font-bold text-green-600">{stats?.definitivo || 0}</span>
+              <span className="text-2xl font-bold text-green-600 dark:text-green-400">{stats?.definitivo || 0}</span>
             </div>
           </CardContent>
         </Card>
@@ -252,7 +252,7 @@ export function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     {modelo.codigo_autodata && (
-                      <span className="text-xs font-mono px-2 py-1 rounded bg-purple-100 text-purple-800">
+                      <span className="text-xs font-mono px-2 py-1 rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                         {modelo.codigo_autodata}
                       </span>
                     )}

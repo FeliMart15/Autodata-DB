@@ -99,12 +99,12 @@ export function PreciosPage() {
           </div>
 
           {result && result.success && (
-            <div className="mt-6 p-4 border border-green-200 bg-green-50 rounded-lg">
-              <h3 className="flex items-center gap-2 font-medium text-green-800">
+            <div className="mt-6 p-4 border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800/50 rounded-lg">
+              <h3 className="flex items-center gap-2 font-medium text-green-800 dark:text-green-300">
                 <CheckCircle2 className="h-5 w-5" />
                 Resumen de Carga
               </h3>
-              <ul className="mt-2 space-y-1 text-sm text-green-700 pl-7 list-disc">
+              <ul className="mt-2 space-y-1 text-sm text-green-700 dark:text-green-400 pl-7 list-disc">
                 <li>Precios actualizados: <strong>{result.creados.precios}</strong></li>
                 <li>Filas ignoradas o sin cambios: <strong>{result.creados.ignorados}</strong></li>
               </ul>
