@@ -360,11 +360,11 @@ const stripAccents = (s) => String(s || '')
 const pad4 = (v) => String(v ?? '').trim().padStart(4, '0');
 const codAutodataDe = (marcod, marmodcod) => pad4(marcod) + pad4(marmodcod);
 
-// NULL o "N/A" (venga como venga) -> "." ; cualquier otro valor -> texto tal cual
+// NULL, "N/A" o "S/D" (venga como venga) -> "." ; cualquier otro valor -> texto tal cual
 const caroneValor = (v) => {
   if (v === null || v === undefined) return CARONE_MISSING;
   const s = String(v).trim();
-  if (s === '' || s.toUpperCase() === 'N/A') return CARONE_MISSING;
+  if (s === '' || s.toUpperCase() === 'N/A' || s.toUpperCase() === 'S/D') return CARONE_MISSING;
   return s;
 };
 
@@ -439,7 +439,7 @@ exports.exportarCarone = async (req, res) => {
         e.CapacidadBaul, e.CapacidadTanqueCombustible, e.DiametroLlantas, e.Tapizado,
         e.Camara, e.SensorEstacionamiento, e.Techo, e.DiscosFrenos, e.ControlTraccion,
         e.MirrorScreen,
-        e.AutonomiaMotorElectricoBEVPHEV, e.CapacidadOperativaBateria, e.PotenciaMotor, e.TiposConectores
+        e.AutonomiaMaxRange, e.CapacidadOperativaBateria, e.PotenciaMotor, e.TiposConectores
       FROM Modelo mo
       JOIN Marca ma ON mo.MarcaID = ma.MarcaID
       LEFT JOIN EquipamientoModelo e ON mo.ModeloID = e.ModeloID
@@ -472,7 +472,7 @@ exports.exportarCarone = async (req, res) => {
       return {
         MARCOD: m.MarcodOut,
         MARMODCOD: m.MarmodcodOut,
-        MAEANIO: CARONE_MISSING,
+        MAEANIO: '9999',
         CODIGOCLIENTE: '429',
         'SHORT NAME': shortName,
         TIPO: tipo,
@@ -501,7 +501,7 @@ exports.exportarCarone = async (req, res) => {
         'CONTROL TRACCION': caroneSiNo(m.ControlTraccion),
         'ANDROID Y APPLE': caroneSiNo(m.MirrorScreen),
         'MARCA CORTA': caroneValor(m.MarcaDescripcion),
-        AUTONOMIA: caroneValor(m.AutonomiaMotorElectricoBEVPHEV),
+        AUTONOMIA: caroneValor(m.AutonomiaMaxRange),
         CAPACIDAD: caroneValor(m.CapacidadOperativaBateria),
         'POTENCIA KW': caroneValor(m.PotenciaMotor),
         'TIPO DE CONECTOR': caroneValor(m.TiposConectores)
